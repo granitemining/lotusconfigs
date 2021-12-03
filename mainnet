@@ -124,5 +124,5 @@ export LOTUS_DAGSTORE_MAXCONCURRENCYSTORAGECALLS
 export LOTUS_DAGSTORE_GCINTERVAL
 
 if [[ $* == *-p* ]] || [[ $* == *--print* ]]; then
-    source ./.lotusprintf
+    source ./lotusprintf
 fi
