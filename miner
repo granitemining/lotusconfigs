@@ -1,6 +1,6 @@
 source ./node
 
-export LOTUS_MINER_PATH=/fil/mainnet/lotusminer
+export LOTUS_MINER_PATH=/fil/calibnet/lotusminer
 export TMPDIR=/fil/sealing
 export MINER_API_INFO
 export LOTUS_SUBSYSTEMS_ENABLEMINING
