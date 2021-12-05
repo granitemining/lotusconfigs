@@ -1,2 +1,2 @@
 source ./miner
-export LOTUS_WORKER_PATH=/fil/mainnet/lotusworker
+export LOTUS_WORKER_PATH=/fil/calibnet/lotusworker
