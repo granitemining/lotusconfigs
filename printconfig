@@ -118,3 +118,7 @@ printf "LOTUS_DAGSTORE_MAXCONCURRENTINDEX                                   $LOT
 printf "LOTUS_DAGSTORE_MAXCONCURRENTREADYFETCHES                            $LOTUS_DAGSTORE_MAXCONCURRENTREADYFETCHES\n"
 printf "LOTUS_DAGSTORE_MAXCONCURRENCYSTORAGECALLS                           $LOTUS_DAGSTORE_MAXCONCURRENCYSTORAGECALLS\n"
 printf "LOTUS_DAGSTORE_GCINTERVAL                                           $LOTUS_DAGSTORE_GCINTERVAL\n"
+printf "GOLOG_LOG_LEVEL                                                     $GOLOG_LOG_LEVEL\n"
+printf "GOLOG_LOG_FMT                                                       $GOLOG_LOG_FMT\n"
+printf "GOLOG_FILE                                                          $GOLOG_FILE\n"
+printf "GOLOG_OUTPUT                                                        $GOLOG_OUTPUT\n"
