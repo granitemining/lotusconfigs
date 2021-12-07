@@ -122,3 +122,6 @@ printf "GOLOG_LOG_LEVEL-----------------------------------------------------$GOL
 printf "GOLOG_LOG_FMT-------------------------------------------------------$GOLOG_LOG_FMT\n"
 printf "GOLOG_FILE----------------------------------------------------------$GOLOG_FILE\n"
 printf "GOLOG_OUTPUT--------------------------------------------------------$GOLOG_OUTPUT\n"
+printf "RUSTFLAGS-----------------------------------------------------------$RUSTFLAGS\n"
+printf "FFI_BUILD_FROM_SOURCE-----------------------------------------------$FFI_BUILD_FROM_SOURCE\n"
+printf "FFI_USE_MULTICORE_SDR-----------------------------------------------$FFI_USE_MULTICORE_SDR\n"
