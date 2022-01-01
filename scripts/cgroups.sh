@@ -1,18 +1,14 @@
 #!/usr/bin/bash
 
-cgroup=1
+CGROUP_LOGLEVEL=DEBUG
 
 # Create pc1 cgroups
-while [cgroup <= 16]
+for (( cgroup=1; cgroup<=16; cgroup++ ))
 do
-echo "Creating cgroup pc1w$cgroup!"
-cgroup++
-done
-
-
-# Create pc2c2 cgroups
-while [cgroup <= 8]
-do
-echo "Creating cgroup pc2c2w$cgroup!"
-cgroup++
+	let cpu=$cgroup-1
+	let mem=0
+	cgcreate -a filuser:fil -t filuser:fil -g cpuset:pc1w$cgroup
+	cgset -r cpuset.cpus=$cpu pc1w$cgroup
+	cgset -r cpuset.mems=$mem pc1w$cgroup
+	echo "Created cgroup pc1w$cgroup!"
 done
