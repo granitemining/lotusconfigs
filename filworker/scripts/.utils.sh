@@ -1,54 +1,46 @@
-# Usage: cgcreatesh(name, index)
-# Called it cgcreatesh to distinguish it from bin cgcreate
-function cgcreatesh() {
+# Usage: createcg(name)
+function createcg() {
   cgname=$1
   cgindex=$2
   cgexists=$(lscgroup cpuset:$cgname | wc -c)
 
   if [[ "$cgexists" == 0 ]] ; then
-    echo "Creating cgroup $cgname."
     let cpu=$cgindex-1
-    if sudo cgcreate -a filuser:fil -t filuser:fil -g cpuset:$cgname ; then
-      cgset -r cpuset.cpus=$cpu $cgname
-      cgset -r cpuset.mems=0 $cgname
-      echo "Finished creating cgroup $cgname."
-    else
-      echo "Failed to create cpuset:$cgname. Quitting..."
-      return 1
-    fi
+    sudo cgcreate -a filuser:fil -t filuser:fil -g cpuset:$cgname ; then
+    cgset -r cpuset.cpus=$cpu $cgname
+    cgset -r cpuset.mems=0 $cgname
   fi
-
-  return 0
 }
 
-# Usage: repocreate(name)
-function repocreate() {
-  echo "Creating repo $1."
-  repo="/fil/calibnet/lotusworkers/$1"
-  repoexists=$(ls -A $repo | wc -c)
-  if [[ "$repoexists" == 0 ]] ; then
-    mkdir -p $repo
-    if sudo mount --options size=4G -t tmpfs none $repo ; then
-      sudo chown -R filuser:fil $repo
-      echo "Finished creating repo at $repo"
-    else
-      echo "Failed to mount ramdisk at $repo. Quitting..."
-      return 1
-    fi
-  fi
-
-  return 0
+# Usage: createrepo(reponame)
+function createrepo() {
+  reponame=$1
+  repo="/fil/calibnet/lotusworkers/$reponame"
+  mkdir -p $repo
+  sudo mount --options size=4G -t tmpfs none $repo
+  sudo chown -R filuser:fil $repo
 }
 
-# Usage: getindex(token)
+# Usage: getreponame()
+function getreponame() {
+  reponame=$(echo $RANDOM | md5sum | head -c 8)
+  for dir in /fil/calibnet/lotusworkers/*/; do
+    if [[ ! -a "$dir/.inuse" ]] ; then
+      reponame=${dir%*/}
+      break
+    fi
+  done
+  return $reponame
+}
+
+# Usage: getindex
 function getindex() {
-  index=1
-  for d in /fil/calibnet/lotusworkers/$1*; do
-    if [[ -d "$d" ]] && [[ ! -a "$d/.inuse" ]] ; then
+  index=0
+  for dir in /fil/calibnet/lotusworkers/*/; do
+    if [[ ! -a "$dir/.inuse" ]] ; then
       break
     fi
     ((index++))
   done
-
   return $index
 }

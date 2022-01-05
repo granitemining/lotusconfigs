@@ -1,12 +1,11 @@
 #!/usr/bin/env bash
-#set -x
-#trap read debug
+set -x
+trap read debug
 
 source .utils.sh
 
-# Get pc1 index
-getindex 'pc1'
-windex=$?
+reponame=$(getreponame)
+
 
 # Create pc1 repo
 wname="pc1w$index"
