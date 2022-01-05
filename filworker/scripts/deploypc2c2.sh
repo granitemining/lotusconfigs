@@ -12,6 +12,11 @@ wname="pc2c2w$windex"
 repocreate $wname
 wrepo=$?
 
+# Map GPU based on windex
+let gpu=$(($windex%4))
+CUDA_VISIBLE_DEVICES=$gpu
+export CUDA_VISIBLE_DEVICES
+
 source ../.pc2c2.env
 let port=3500+$windex
 listen="10.0.0.243:$port"
