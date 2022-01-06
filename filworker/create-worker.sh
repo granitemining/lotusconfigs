@@ -4,7 +4,7 @@ set -x
 trap read debug
 
 correct='n'
-while [ $correct -ne 'y' ]
+while [[ "$correct" != "y" ]]
 do
   echo -n "Name of worker [leave blank for random]: "; read -r wreponame
   echo -n "AddPiece? [y]: "; read -r addpiece
