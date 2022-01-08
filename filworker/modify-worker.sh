@@ -19,4 +19,4 @@ source $wrepopath/$wreponame.env
 correct='n'
 while [[ "$correct" != "y" ]]
 do
-    read -p "AddPiece? [y/n] >" -i 
+    read -p "AddPiece? [y/n] >" -i
