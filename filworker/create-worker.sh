@@ -28,6 +28,7 @@ do
   read -p "IP: "                    -i $ip -e ip
   read -p "GPUs: "                  -i $gpus -e gpus
   read -p "Timeout: "               -i $timeout -e timeout
+  read -p "Multicore? [1/0] "       -i $multicore -e multicore    
   read -p "Is the above correct? [y/n] " -e correct
 done
 
@@ -50,7 +51,7 @@ export FIL_PROOFS_PARAMETER_CACHE='/fil/parameters'
 export FIL_PROOFS_PARENT_CACHE='/fil/parents'
 export FIL_PROOFS_USE_GPU_COLUMN_BUILDER=1
 export FIL_PROOFS_USE_GPU_TREE_BUILDER=1
-export FIL_PROOFS_USE_MULTICORE_SDR=0
+export FIL_PROOFS_USE_MULTICORE_SDR=$multicore
 export FIL_PROOFS_MULTICORE_SDR_PRODUCERS=2
 export FULLNODE_API_INFO='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBbGxvdyI6WyJyZWFkIiwid3JpdGUiLCJzaWduIiwiYWRtaW4iXX0.o7vVP3Ar8Y3aVXDXgxEiAw7k_OnVvAwY3gQ8hMwdx0Q:/ip4/10.0.0.76/tcp/18001/http'
 export MINER_API_INFO='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJBbGxvdyI6WyJyZWFkIiwid3JpdGUiLCJzaWduIiwiYWRtaW4iXX0.tXpA8Aii09eQz0Rh1nU4zsZb-pDaJjd3X6cZV5LcG4M:/ip4/10.0.0.76/tcp/18002/http'
