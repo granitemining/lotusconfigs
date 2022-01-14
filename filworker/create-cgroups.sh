@@ -1,47 +1,80 @@
 #!/usr/bin/env bash
 
-set -o braceexpand
+# Usage: .generatecgdef $cgname $uid $gid $cpus $mems $tmpfile 
+function .generatecgdef()
+{
+    cat << EOT >> $6
+    group $1 {
+        perm {
+            task {
+                uid = $2;
+                gid = $3;
+            }
+            admin {
+                uid = $2;
+                gid = $3;
+            }
+        }
+        cpuset {
+            cpuset.cpus = $4;
+            cpuset.mems = $5;
+        }
+    }
+EOT
+    echo "$1 :: cpus = $4 & mems = $5"
+}
 
 while [[ "$correct" != "y" ]]
 do
-  read -p "How many core complexes? >" -i $ccxcount -e ccxcount
-  read -p "How many cores per complex? >" -i $coresperccx -e coresperccx
-  read -p "Which user will own the cgroups? >" -i $uid -e user
-  read -p "Which group will own the cgroups? >" -i $gid -e group
-  read -p "Is the above correct? [y/n] >" -e correct
+  read -p "How many CPUs? >"                    -i $cpucount -e cpucount
+  read -p "How many core complexes per CPU? >"  -i $ccxcount -e ccxcount
+  read -p "How many cores per complex? >"       -i $ccxcorecount -e ccxcorecount
+  read -p "How many memory nodes >"             -i $memcount -e memcount
+  read -p "Hyperthreading? [y/n] >"             -i $hyperthreading -e hyperthreading
+  read -p "Which user will own the cgroups? >"  -i $uid -e uid
+  read -p "Which group will own the cgroups? >" -i $gid -e gid
+  read -p "Is the above correct? [y/n] >"       -e correct
 done
 
-let corecount=$ccxcount*$coresperccx-1
-let ccxcount-- # Make ccxcount 0 based
+# Double ccx count if hyperthreading is enabled
+let hyperthreads=1
+if [[ "$hyperthreading" == "y" ]] ; then
+    let hyperthreads=2
+fi
+
+let ccxtotal=$cpucount*$ccxcount*$hyperthreads
+let coretotal=$ccxtotal*$ccxcorecount
 
 tmpfile=$(mktemp /tmp/cgconfig.XXXXXX.conf)
+cgname='all'
+cpus="0-$(expr $coretotal - 1)"
+mems="0-$(expr $memcount - 1)"
+let memshalf=$coretotal/2
 
-cpus="0-$corecount"
-mems="0-1"
-echo "group all { perm { task { uid = $uid; gid = $gid; } admin { uid = $uid; gid = $gid; } } cpuset { cpuset.cpus = 0-$corecount; cpuset.mems = 0-1; } }" >> $tmpfile
-mycgconfig="all :: cpus = $cpus & mems = $mems"
+.generatecgdef "$cgname" "$uid" "$gid" "$cpus" "$mems" "$tmpfile"
 
-for $iccx in {0..$ccxcount}
+for (( iccx=0; iccx<$ccxtotal; iccx++ ))
 do
-    cg="all/ccx$iccx"
-    let cpulowerbound=$iccx*$coresperccx
+    cgccxname="$cgname/ccx$iccx"
+    let cpulowerbound=$iccx*$ccxcorecount
     let cpuupperbound=$cpulowerbound+2
     cpus="$cpulowerbound-$cpuupperbound"
-    let mems=$corecount/$cpulowerbound
-    echo "group $cg { perm { task { uid = $uid; gid = $gid; } admin { uid = $uid; gid = $gid; } } cpuset { cpuset.cpus = $cpus; cpuset.mems = $mems; } }" >> $tmpfile
-    mycgconfig="$mycgconfig\n$cg :: cpus = $cpus & mems = $mems"
+    
+    if (( cpulowerbound < memshalf )); then
+	mems=0
+    else
+	mems=1
+    fi
 
-    for $icore in {$cpulowerbound..$cpuupperbound}
+    .generatecgdef "$cgccxname" "$uid" "$gid" "$cpus" "$mems" "$tmpfile"
+    for (( icore=$cpulowerbound; icore<=$cpuupperbound; icore++ ))
     do
-        cg="$cg/c$icore"
-        echo "group $cg { perm { task { uid = $uid; gid = $gid; } admin { uid = $uid; gid = $gid; } } cpuset { cpuset.cpus = $icore; cpuset.mems = $mems; } }" >> $tmpfile
-        mycgconfig="$mycgconfig\n$cg :: cpus = $cpus & mems = $mems"
+        cgcorename="$cgccxname/c$icore"
+	.generatecgdef "$cgcorename" "$uid" "$gid" "$icore" "$mems" "$tmpfile"
     done
 done
-
-echo $mycgconfig
 
 read -p "Create these cgroups? [y/n] >" -r create
 if [[ "$create" == "y" ]] ; then
     cgconfigparser -l $tmpfile
-done
+fi
