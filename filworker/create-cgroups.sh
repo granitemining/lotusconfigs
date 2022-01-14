@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+set -o braceexpand
+
 while [[ "$correct" != "y" ]]
 do
   read -p "How many core complexes? >" -i $ccxcount -e ccxcount
