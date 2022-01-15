@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
-# Usage: .generatecgdef $cgname $uid $gid $cpus $mems $tmpfile 
-function .generatecgdef()
+# Usage: generatecgdef $cgname $uid $gid $cpus $mems $tmpfile 
+function generatecgdef
 {
     cat << EOT >> $6
     group $1 {
@@ -37,10 +37,10 @@ do
 done
 
 # Double ccx count if hyperthreading is enabled
-let hyperthreads=1
-if [[ "$hyperthreading" == "y" ]] ; then
-    let hyperthreads=2
-fi
+case "$hyperthreading" in
+  'y') hyperthreads=2 ;;
+    *) hyperthreads=1 ;;
+esac
 
 let ccxtotal=$cpucount*$ccxcount*$hyperthreads
 let coretotal=$ccxtotal*$ccxcorecount
@@ -51,30 +51,27 @@ cpus="0-$(expr $coretotal - 1)"
 mems="0-$(expr $memcount - 1)"
 let memshalf=$coretotal/2
 
-.generatecgdef "$cgname" "$uid" "$gid" "$cpus" "$mems" "$tmpfile"
-
+generatecgdef "$cgname" "$uid" "$gid" "$cpus" "$mems" "$tmpfile"
 for (( iccx=0; iccx<$ccxtotal; iccx++ ))
 do
-    cgccxname="$cgname/ccx$iccx"
     let cpulowerbound=$iccx*$ccxcorecount
     let cpuupperbound=$cpulowerbound+2
-    cpus="$cpulowerbound-$cpuupperbound"
-    
-    if (( cpulowerbound < memshalf )); then
-	mems=0
-    else
-	mems=1
-    fi
 
-    .generatecgdef "$cgccxname" "$uid" "$gid" "$cpus" "$mems" "$tmpfile"
+    cgccxname="$cgname/ccx$iccx"
+    cpus="$cpulowerbound-$cpuupperbound"
+
+    (( cpulowerbound < memshalf )) && mems=0 || mems=1
+    generatecgdef "$cgccxname" "$uid" "$gid" "$cpus" "$mems" "$tmpfile"
     for (( icore=$cpulowerbound; icore<=$cpuupperbound; icore++ ))
     do
         cgcorename="$cgccxname/c$icore"
-	.generatecgdef "$cgcorename" "$uid" "$gid" "$icore" "$mems" "$tmpfile"
+	generatecgdef "$cgcorename" "$uid" "$gid" "$icore" "$mems" "$tmpfile"
     done
 done
 
 read -p "Create these cgroups? [y/n] >" -r create
 if [[ "$create" == "y" ]] ; then
-    cgconfigparser -l $tmpfile
+    sudo cgconfigparser -l $tmpfile
 fi
+
+rm $tmpfile
