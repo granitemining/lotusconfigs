@@ -35,7 +35,7 @@ do
     read -p "PreCommit2? [y/n] " -i $precommit2 -e precommit2
     read -p "Commit? [y/n] "     -i $commit -e commit
     read -p "Unseal? [y/n] "     -i $unseal -e unseal
-    read -p "CPU group: "             -i $cpus -e cpus
+    read -p "CPU group: "             -i $cpugroup -e cpugroup
     read -p "Port: "                  -i $port -e port
     read -p "IP: "                    -i $ip -e ip
     read -p "GPUs: "                  -i $gpus -e gpus
@@ -66,5 +66,5 @@ export LOTUS_CUSTOM_UNSEAL=$unseal
 export LOTUS_CUSTOM_IP=$ip
 export LOTUS_CUSTOM_PORT=$port
 export LOTUS_CUSTOM_TIMEOUT=$timeout
-export LOTUS_CUSTOM_CPUGROUP=$cpus
+export LOTUS_CUSTOM_CPUGROUP=$cpugroup
 EOT
