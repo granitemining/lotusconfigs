@@ -1,18 +1,21 @@
 #!/usr/bin/env bash
 
-while read -r line
+while IFS= read line
 do
-    jobid=$(echo "$line" | awk '{print $1;}')
-    echo $jobid
-    if [[ "$jobid" =~ [[:alnum:]{8}] ]] ; then
-	echo "$jobid is a valid job ID"
+    jobid=$(echo "$line" | awk '{print $1;}')    
+
+    if ! [[ "$jobid" =~ ^[a-f0-9]{8} ]] ; then
+	continue
     fi
 
-    exit
+    if [[ "$jobid" == "00000000" ]] ; then
+	echo "Skipping $jobid..."
+	continue
+    fi
     
     read -p "Delete job $jobid? [y/n] " -r confirm
     if [[ "$confirm" == "y" ]] ; then
 	lotus-miner sealing abort $jobid
     fi
 
-done < <(lotus-miner sealing jobs)    
+done <<< $(lotus-miner sealing jobs)    
