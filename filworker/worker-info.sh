@@ -1,25 +1,15 @@
 #!/usr/bin/env bash
 
-while :
-do
-    read -p "Get info of which worker? >" -i $wreponame -e wreponame
-    if [ ! -d "/fil/sealing/$wreponame" ] ; then
-	echo "$wreponame does not exist."
-	echo "Use create-worker.sh to create it first."
-	continue
-    fi
-    break
-done
+dir="${BASH_SOURCE%/*}"
+if [[ ! -d "$dir" ]]; then dir="$PWD"; fi
+. "$dir/.utils.sh"
 
-wrepopath="/fil/sealing/$wreponame"
-
+_get_worker
 lotus-worker --worker-repo=$wrepopath info
 
 read -p "Press [enter] to continue..."
 
 source $wrepopath/$wreponame.env
-ip=$LOTUS_CUSTOM_IP
-port=$LOTUS_CUSTOM_PORT
-pid=$(pgrep -f listen=$ip:$port)
+pid=$(pgrep -f listen=$LOTUS_CUSTOM_IP:$LOTUS_CUSTOM_PORT)
 
 strings /proc/$pid/environ

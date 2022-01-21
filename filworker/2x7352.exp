@@ -61,8 +61,8 @@ Hyperthreading? \[y/n\] >"
 send -- "y\r"
 expect -exact "y\r
 Which user will own the cgroups? >"
-send -- "filuser\r"
-expect -exact "filuser\r
+send -- "calibnet\r"
+expect -exact "calibnet\r
 Which group will own the cgroups? >"
 send -- "fil\r"
 expect -exact "fil\r
