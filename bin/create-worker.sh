@@ -18,6 +18,7 @@ do
   read -p "GPUs: "                    -i $LOTUS_CUSTOM_GPUS -e LOTUS_CUSTOM_GPUS
   read -p "Timeout: "                 -i $LOTUS_CUSTOM_TIMEOUT -e LOTUS_CUSTOM_TIMEOUT
   read -p "Multicore? [1/0] "         -i $FIL_PROOFS_USE_MULTICORE_SDR -e FIL_PROOFS_USE_MULTICORE_SDR
+  read -p "Producers? "               -i $FIL_PROOFS_MULTICORE_SDR_PRODUCERS -e FIL_PROOFS_MULTICORE_SDR_PRODUCERS
   read -p "Is the above correct? [y/n] " -e correct
 done
 
