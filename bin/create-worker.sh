@@ -21,7 +21,7 @@ do
   read -p "Is the above correct? [y/n] " -e correct
 done
 
-wrepopath="~/.lotusworkers/$wreponame"
+wrepopath="$HOME/.lotusworkers/$wreponame"
 mkdir -p $wrepopath/tmpdir
 
 _modify_config
