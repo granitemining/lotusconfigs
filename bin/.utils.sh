@@ -6,7 +6,7 @@ function _get_worker
     while :
     do
 	read -p "Worker name: " -i $wreponame -e wreponame
-	wrepopath="~/.lotusworkers/$wreponame"
+	wrepopath="$HOME/.lotusworkers/$wreponame"
 	if [ ! -d "$wrepopath" ] ; then
 	    echo "$wreponame does not exist."
 	    echo "Use create-worker.sh to create it first."
