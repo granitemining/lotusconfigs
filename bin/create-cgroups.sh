@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Usage: generatecgdef $cgname $uid $gid $cpus $mems $tmpfile 
+# Usage: generatecgdef $cgname $uid $gid $cpus $mems $tmpfile
 function generatecgdef
 {
     cat << EOT >> $6
@@ -26,10 +26,10 @@ EOT
 
 while [[ "$correct" != "y" ]]
 do
-  read -p "How many CPUs? >"                    -i $cpucount -e cpucount
-  read -p "How many core complexes per CPU? >"  -i $ccxcount -e ccxcount
-  read -p "How many cores per complex? >"       -i $ccxcorecount -e ccxcorecount
-  read -p "How many memory nodes >"             -i $memcount -e memcount
+  echo "See https://en.wikipedia.org/wiki/Epyc#Second_generation_Epyc_(Rome)"
+  read -p "How many CPUs? >"                    -i $cpus -e cpus
+  read -p "How many core complexes per CPU? >"  -i $ccxspercpu -e ccxspercpu
+  read -p "How many cores per complex? >"       -i $coresperccx -e coresperccx
   read -p "Hyperthreading? [y/n] >"             -i $hyperthreading -e hyperthreading
   read -p "Which user will own the cgroups? >"  -i $uid -e uid
   read -p "Which group will own the cgroups? >" -i $gid -e gid
@@ -42,31 +42,38 @@ case "$hyperthreading" in
     *) hyperthreads=1 ;;
 esac
 
-let ccxtotal=$cpucount*$ccxcount*$hyperthreads
-let coretotal=$ccxtotal*$ccxcorecount
+let allccxs=$hyperthreads*$cpus*$ccxspercpu
+let allcores=$allccxs*$coresperccx
 
 tmpfile=$(mktemp /tmp/cgconfig.XXXXXX.conf)
 cgname='all'
-cpus="0-$(expr $coretotal - 1)"
-mems="0-$(expr $memcount - 1)"
-let memshalf=$coretotal/2
 
-generatecgdef "$cgname" "$uid" "$gid" "$cpus" "$mems" "$tmpfile"
-for (( iccx=0; iccx<$ccxtotal; iccx++ ))
+cpuinfo="0-$(expr $allcores - 1)"
+if [ $(expr $allcores - 1) -eq 0 ]; then
+  cpuinfo="0"
+fi
+
+meminfo=0
+# meminfo="0-$(expr $allcores - 1)"
+# if [ $(expr $allcores - 1) -eq 0 ]; then
+#   meminfo="0"
+# fi
+
+generatecgdef "$cgname" "$uid" "$gid" "$cpuinfo" "$meminfo" "$tmpfile"
+for (( ccx=0; ccx<$allccxs; ccx++ ))
 do
-    let cpulowerbound=$iccx*$ccxcorecount
-    let cpuupperbound=$cpulowerbound+2
+  let cpulowerbound=$ccx*$coresperccx
+  let cpuupperbound=$cpulowerbound+$coresperccx-1
 
-    cgccxname="$cgname/ccx$iccx"
-    cpus="$cpulowerbound-$cpuupperbound"
+  cgccxname="$cgname/ccx$ccx"
+  cpuinfo="$cpulowerbound-$cpuupperbound"
 
-    (( cpulowerbound < memshalf )) && mems=0 || mems=1
-    generatecgdef "$cgccxname" "$uid" "$gid" "$cpus" "$mems" "$tmpfile"
-    for (( icore=$cpulowerbound; icore<=$cpuupperbound; icore++ ))
-    do
-        cgcorename="$cgccxname/c$icore"
-	generatecgdef "$cgcorename" "$uid" "$gid" "$icore" "$mems" "$tmpfile"
-    done
+  generatecgdef "$cgccxname" "$uid" "$gid" "$cpuinfo" "$meminfo" "$tmpfile"
+  for (( core=$cpulowerbound; core<=$cpuupperbound; core++ ))
+  do
+    cgcorename="$cgccxname/c$core"
+    generatecgdef "$cgcorename" "$uid" "$gid" "$core" "$meminfo" "$tmpfile"
+  done
 done
 
 read -p "Create these cgroups? [y/n] >" -r create
