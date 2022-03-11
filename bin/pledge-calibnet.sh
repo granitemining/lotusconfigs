@@ -4,8 +4,15 @@
 ## DO NOT USE ON MAINNET!!
 ## Modifications by me :)
 
+# Metrics at a glance
+# 2760 seconds = 46 minutes   (~1TB/day)
+# 1380 seconds = 23 minutes   (~2TB/day)
+# 900 seconds  = 15 minutes   (~3TB/day)
+# 690 seconds  = 11.5 minutes (~4TB/day)
+# 540 seconds  = 9 minutes    (~5TB/day)
+LOOP_SLEEP_TIME=1380
+
 INITIAL_SLEEP_TIME=0
-LOOP_SLEEP_TIME=900 # 900 seconds = 15 minutes
 PLEDGE_COUNTER=0
 WITHDRAWL_INTERVAL=10
 

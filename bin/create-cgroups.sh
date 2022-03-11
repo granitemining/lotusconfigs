@@ -53,11 +53,10 @@ if [ $(expr $allcores - 1) -eq 0 ]; then
   cpuinfo="0"
 fi
 
-meminfo=0
-# meminfo="0-$(expr $allcores - 1)"
-# if [ $(expr $allcores - 1) -eq 0 ]; then
-#   meminfo="0"
-# fi
+meminfo="0-$(expr $cpus - 1)"
+if [ $(expr $cpus - 1) -eq 0 ]; then
+  meminfo="0"
+fi
 
 generatecgdef "$cgname" "$uid" "$gid" "$cpuinfo" "$meminfo" "$tmpfile"
 for (( ccx=0; ccx<$allccxs; ccx++ ))

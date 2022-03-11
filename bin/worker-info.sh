@@ -5,11 +5,12 @@ if [[ ! -d "$dir" ]]; then dir="$PWD"; fi
 . "$dir/.utils.sh"
 
 _get_worker
-lotus-worker --worker-repo=$wrepopath info
 
+# Print worker info
+lotus-worker --worker-repo=$wrepopath info
 read -p "Press [enter] to continue..."
 
+# Print environment
 source $wrepopath/$wreponame.env
-pid=$(pgrep -f listen=$LOTUS_CUSTOM_IP:$LOTUS_CUSTOM_PORT)
-
+pid=$(pgrep -f listen=0.0.0.0:$LOTUS_CUSTOM_PORT)
 strings /proc/$pid/environ
