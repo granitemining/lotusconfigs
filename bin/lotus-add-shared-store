@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+
+while :
+do
+    read -p "Where is the shared store? [Ctrl-C to quit] > " -i $sharedstore -e sharedstore
+    if [ -z "$sharedstore" ]; then
+	echo "Please provide a directory."
+	continue
+    elif [ ! -d "$sharedstore" ]; then
+	echo "Directory $sharedstore does not exist."
+	continue
+    elif [ ! -f "$sharedstore/sectorstore.json" ]; then
+	echo "$sharedstore is not a registered storage location."
+	continue
+    fi
+    break
+done
+
+for d in $HOME/.lotusworkers/*/; do
+
+    # Check if repo belongs to registered worker.
+    storage="${d}storage.json"
+    if [ ! -f "$storage" ]; then
+	echo "$d is not a registered worker. Skipping..."
+	continue
+    fi
+
+    # Check if registered worker has already been updated
+    isupdated=$(cat $storage | jq "(.StoragePaths[] | select(.Path == \"$sharedstore\")) // empty")
+    if [ ! -z "$isupdated" ]; then
+	echo "$d is already updated. Skipping..."
+	continue
+    fi
+
+    # Update storage paths in $worker/storage.json
+    repolock="${d}repo.lock"
+    if [ -f "$repolock" ]; then
+	lotus-worker --worker-repo=$d storage attach $sharedstore
+    else
+        cat $storage | jq ".StoragePaths += [{\"Path\": \"$sharedstore\"}]" | sponge $storage
+    fi
+    
+    echo "Finished updating $d!"
+done
