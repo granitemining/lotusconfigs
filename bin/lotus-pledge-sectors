@@ -5,11 +5,16 @@
 ## Modifications by me :)
 
 # Metrics at a glance
-# 2760 seconds = 46 minutes   (~1TB/day)
-# 1380 seconds = 23 minutes   (~2TB/day)
-# 900 seconds  = 15 minutes   (~3TB/day)
-# 690 seconds  = 11.5 minutes (~4TB/day)
-# 540 seconds  = 9 minutes    (~5TB/day)
+# 2700 seconds = 45 minutes    (~1TiB/day)
+# 1350 seconds = 22.5 minutes  (~2TiB/day)
+# 900 seconds  = 15 minutes    (~3TiB/day)
+# 675 seconds  = 11.25 minutes (~4TiB/day)
+# 540 seconds  = 9 minutes     (~5TiB/day)
+# 450 seconds  = 7.5 minutes   (~6TiB/day)
+# 386 seconds  = 6.43 minutes  (~7TiB/day)
+# 338 seconds  = 5.6 minutes   (~8TiB/day)
+# 300 seconds  = 5 minutes     (~9TiB/day)
+# 270 seconds  = 4.5 minutes  (~10TiB/day)
 LOOP_SLEEP_TIME=480
 
 INITIAL_SLEEP_TIME=0
