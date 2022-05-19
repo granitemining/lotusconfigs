@@ -58,7 +58,7 @@ declare -A g_allFlags
 g_allFlags[SDR]=true
 
 ###############################
-#           BODY LOGIC        #
+#           LOGIC             #
 ###############################
 
 function dialog_redirect_io
@@ -68,22 +68,22 @@ function dialog_redirect_io
 
 function reset_all_types
 {
-    for key in "${!g_allTypes[@]}"; do
-        g_allTypes[$key]=false 
+    for _type in "${!g_allTypes[@]}"; do
+        g_allTypes[$_type]=false 
     done
 }
 
 function reset_all_tasks
 {
-    for key in "${!g_allTasks[@]}"; do
-        g_allTasks[$key]=false 
+    for task in "${!g_allTasks[@]}"; do
+        g_allTasks[$task]=false 
     done
 }
 
 function reset_all_flags
 {
-    for key in "${!g_allFlags[@]}"; do
-	    g_allFlags[$key]=false
+    for flag in "${!g_allFlags[@]}"; do
+	    g_allFlags[$flag]=false
     done
 }
 
@@ -236,18 +236,17 @@ function create_worker_summary_finish
     mkdir -p $wrepopath/tmpdir
 
     declare exports
+
+    if [[ "${g_allTypes[Seal]}" == "true" ]]; then
+        for task in "${!g_allTasks[@]}"; do
+            exports+="export ${task}=${g_allTasks[${task}]};"
+        done
+    fi
     exports+="export BELLMAN_CPU_UTILIZATION=$g_bellmanCpuUtilization;"
     exports+="export TMPDIR=$wrepopath/tmpdir;"
     exports+="export CUDA_VISIBLE_DEVICES=$g_cudaVisibleDevices;"
     exports+="export LOTUS_WORKER_PATH=$wrepopath;"
-    exports+="export LOTUS_CUSTOM_ADDPIECE=${g_allTasks[AP]};"
-    exports+="export LOTUS_CUSTOM_PRECOMMIT1=${g_allTasks[PC1]};"
-    exports+="export LOTUS_CUSTOM_PRECOMMIT2=${g_allTasks[PC2]};"
-    exports+="export LOTUS_CUSTOM_COMMIT=${g_allTasks[C2]};"
-    exports+="export LOTUS_CUSTOM_UNSEAL=${g_allTasks[UNS]};"
-    exports+="export LOTUS_CUSTOM_REPLICA_UPDATE=${g_allTasks[RU]};"
-    exports+="export LOTUS_CUSTOM_PROVE_REPLICA_UPDATE2=${g_allTasks[PR2]};"
-    exports+="export LOTUS_CUSTOM_REGEN_SECTOR_KEY=${g_allTasks[GSK]};"
+
     exports+="export LOTUS_CUSTOM_PORT=$g_port;"
     exports+="export LOTUS_CUSTOM_CPUGROUP=$g_cpuGroup;"
     exports+="export FIL_PROOFS_USE_MULTICORE_SDR=$g_filProofsUseMulticoreSdr;"
