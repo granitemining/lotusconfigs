@@ -28,14 +28,14 @@ for i in \
     readonly ${i}=$((x++)); done
 
 declare -A g_allTasks
-g_allTasks[AP]=false
-g_allTasks[PC1]=false
-g_allTasks[PC2]=false
-g_allTasks[C2]=false
-g_allTasks[UNS]=false
-g_allTasks[GSK]=false
-g_allTasks[RU]=false
-g_allTasks[PR2]=false
+g_allTasks[LOTUS_CUSTOM_ADDPIECE]=false
+g_allTasks[LOTUS_CUSTOM_PRECOMMIT1]=false
+g_allTasks[LOTUS_CUSTOM_PRECOMMIT2]=false
+g_allTasks[LOTUS_CUSTOM_COMMIT]=false
+g_allTasks[LOTUS_CUSTOM_UNSEAL]=false
+g_allTasks[LOTUS_CUSTOM_REPLICA_UPDATE]=false
+g_allTasks[LOTUS_CUSTOM_PROVE_REPLICA_UPDATE2]=false
+g_allTasks[LOTUS_CUSTOM_REGEN_SECTOR_KEY]=false
 
 declare -A -r g_isEnabled=([true]=on [false]=off)
 declare g_name
@@ -105,6 +105,33 @@ function is_flag_enabled
     echo ${g_isEnabled[${g_allFlags[${flag}]}]}
 }
 
+function generate_all_tasks
+{
+    local options=$(for task in "${!g_allTasks[@]}"; do
+        echo -n "$task $task $(is_task_enabled $task) "
+    done)
+
+    echo -n $options
+}
+
+function generate_all_types
+{
+    local options=$(for _type in "${!g_allTypes[@]}"; do
+        echo -n "$_type $_type $(is_type_enabled $_type) "
+    done)
+
+    echo -n $options
+}
+
+function generate_all_flags
+{
+    local options=$(for flag in "${!g_allFlags[@]}"; do
+        echo -n "$flag $flag $(is_flag_enabled $flag) "
+    done)
+
+    echo -n $options
+}
+
 function create_worker_generalparams
 {
     local state=$E_CREATE_QUIT
@@ -133,10 +160,6 @@ function create_worker_generalparams
 
 function create_worker_type
 {
-    local options=$(for key in "${!g_allTypes[@]}"; do
-        echo -n "$key $key $(is_type_enabled $key) "
-    done)
-
     local state=$E_CREATE_QUIT
     g_type=$(dialog \
         --title 'Create Worker' \
@@ -152,7 +175,7 @@ function create_worker_type
     local result=$?
     if [ -n "$g_type" ]; then
 	    reset_all_types	
-    	g_allTypes[$g_type]=true
+    	[[ -v g_allTypes[$g_type] ]] && g_allTypes[$g_type]=true
     fi
 
     case $result in
@@ -173,10 +196,6 @@ function create_worker_type
 
 function create_worker_tasks
 {
-    local options=$(for key in "${!g_allTasks[@]}"; do
-        echo -n "$key $key $(is_task_enabled $key)) "
-    done)
-
     local state=$E_CREATE_QUIT
     g_tasks=$(dialog \
         --title 'Creater Worker' \
@@ -185,10 +204,20 @@ function create_worker_tasks
 	    --extra-button \
         --extra-label 'Back' \
 	    --no-cancel \
+        --no-tags \
         --checklist 'Select Tasks' $HEIGHT $WIDTH 10 \
-        $options 3>&1 1>&2 2>&3 3>&-)
+        $(generate_all_tasks) 3>&1 1>&2 2>&3 3>&-)
 
     local result=$?
+    reset_all_tasks
+    if [ -n "$g_tasks" ]; then
+        IFS=' '
+        read -a strarr <<< "$g_tasks"
+        for task in "${strarr[@]}"; do
+            [[ -v g_allTasks[$task] ]] && g_allTasks[$task]=true
+        done
+    fi
+
     case $result in
         $DIALOG_NEXT ) 
             state=$E_CREATE_SUMMARY 
@@ -197,14 +226,6 @@ function create_worker_tasks
             state=$E_CREATE_TYPE 
             ;;
     esac
-
-    reset_all_tasks
-    if [ -n "$g_tasks" ]; then
-        readarray -t strarr <<< "$g_tasks"
-        for task in "${strarr[@]}"; do
-            g_allTasks[$task]=true
-        done
-    fi
 
     return $state
 }
@@ -332,14 +353,11 @@ function create_worker_advanced_page2
             ;;
     esac
 
-    echo "g_advancedFlags is $g_advancedFlags"
-    read -n 1
-
     reset_all_flags
     if [ -n "$g_advancedFlags" ]; then
         readarray -t strarr <<< "$g_advancedFlags"
         for flag in "${strarr[@]}"; do
-            g_allFlags[$flag]=true
+            g_allFlags["$flag"]=true
         done
     fi
 
@@ -442,6 +460,9 @@ function list_workers
            --msgbox "$text" $HEIGHT $WIDTH \
            3>&1 1>&2 2>&3 3>&-
 }
+
+generate_all_tasks
+read -n 1
 
 while true; do
     selection=$(dialog \
