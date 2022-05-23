@@ -116,9 +116,6 @@ function create_worker_generalparams
             ;;
     esac
 
-    echo "generalParams is $generalParams"
-    read -n 1
-
     if [ -n "$generalParams" ]; then
         readarray -t strarr <<< "$generalParams"
         g_name=${strarr[0]}
