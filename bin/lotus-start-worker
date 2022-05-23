@@ -26,5 +26,7 @@ if [[ "${start,,}" == "y" ]] ; then
         --unseal=${LOTUS_CUSTOM_UNSEAL:=false} \
         --replica-update=${LOTUS_CUSTOM_REPLICA_UPDATE:=false} \
         --prove-replica-update2=${LOTUS_CUSTOM_PROVE_REPLICA_UPDATE2:=false} \
-        --regen-sector-key=${LOTUS_CUSTOM_REGEN_SECTOR_KEY:=false}
+        --regen-sector-key=${LOTUS_CUSTOM_REGEN_SECTOR_KEY:=false} \
+        --winningpost=${LOTUS_CUSTOM_WINNINGPOST:=false} \
+        --windowpost=${LOTUS_CUSTOM_WINDOWPOST:=false}
 fi

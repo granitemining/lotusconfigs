@@ -15,7 +15,7 @@
 # 338 seconds  = 5.6 minutes   (~8TiB/day)
 # 300 seconds  = 5 minutes     (~9TiB/day)
 # 270 seconds  = 4.5 minutes  (~10TiB/day)
-LOOP_SLEEP_TIME=480
+LOOP_SLEEP_TIME=540
 
 INITIAL_SLEEP_TIME=0
 PLEDGE_COUNTER=0
