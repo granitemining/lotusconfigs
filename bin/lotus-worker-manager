@@ -23,76 +23,73 @@ for i in \
     E_CREATE_ADVANCED_PAGE1 E_CREATE_ADVANCED_PAGE2 E_CREATE_ADVANCED_QUIT; do \
     readonly ${i}=$((x++)); done
 
-declare -A g_allTasks
-g_allTasks[LOTUS_CUSTOM_ADDPIECE]=false
-g_allTasks[LOTUS_CUSTOM_PRECOMMIT1]=false
-g_allTasks[LOTUS_CUSTOM_PRECOMMIT2]=false
-g_allTasks[LOTUS_CUSTOM_COMMIT]=false
-g_allTasks[LOTUS_CUSTOM_UNSEAL]=false
-g_allTasks[LOTUS_CUSTOM_REPLICA_UPDATE]=false
-g_allTasks[LOTUS_CUSTOM_PROVE_REPLICA_UPDATE2]=false
-g_allTasks[LOTUS_CUSTOM_REGEN_SECTOR_KEY]=false
-
-declare -A -r g_isEnabled=([true]=on [false]=off)
-
-declare -A g_allGeneralParameters
-g_allGeneralParameters[LOTUS_CUSTOM_NAME]=''
-g_allGeneralParameters[LOTUS_CUSTOM_PORT]=''
-g_allGeneralParameters[CUDA_VISIBLE_DEVICES]=''
-
-declare -A g_allAdvancedParameters
-g_allAdvancedParameters[BELLMAN_CPU_UTILIZATION]=0.01
-
-declare -A g_allTypes
-g_allTypes[Seal]=true
-g_allTypes[WdPoSt]=false
-g_allTypes[WinPoSt]=false
-
-declare -A g_allFlags
-g_allFlags[FIL_PROOFS_USE_MULTICORE_SDR]=true
-
-function dialog_redirect_io
-{
-    echo -n '3>&1 1>&2 2>&3 3>&-'
-}
-
-function reset_all_types
-{
-    for _type in "${!g_allTypes[@]}"; do
-        g_allTypes[$_type]=false 
-    done
-}
-
-function reset_all_tasks
-{
-    for task in "${!g_allTasks[@]}"; do
-        g_allTasks[$task]=false 
-    done
-}
-
-function reset_all_flags
-{
-    for flag in "${!g_allFlags[@]}"; do
-	    g_allFlags[$flag]=false
-    done
-}
+declare g_name
+declare g_port
+declare g_type='Seal'
+declare g_gpus
+declare g_cpuUtilization='0.01'
+declare g_tasks
+declare g_flags='SDR'
+declare g_cpuGroup='all'
 
 function is_task_enabled
 {
     local task=${@:1}
-    echo ${g_isEnabled[${g_allTasks[${task}]}]}
+    if [[ "$g_tasks" =~ "$task" ]]; then
+        echo 'on'
+    else
+        echo 'off'
+    fi
+}
+
+function is_task_set
+{
+    local task=${@:1}
+    if [[ "$g_tasks" =~ "$task" ]]; then
+        echo 'true'
+    else
+        echo 'false'
+    fi
 }
 
 function is_type_enabled
 {
     local type=${@:1}
-    echo ${g_isEnabled[${g_allTypes[${type}]}]}
+    if [[ "$g_type" == "$type" ]]; then
+        echo 'on'
+    else
+        echo 'off'
+    fi
+}
+
+function is_type_set
+{
+    local type=${@:1}
+    if [[ "$g_type" == "$type" ]]; then
+        echo 'true'
+    else
+        echo 'false'
+    fi
 }
 
 function is_flag_enabled
 {
     local flag=${@:1}
-    echo ${g_isEnabled[${g_allFlags[${flag}]}]}
+    if [[ "$g_flags" =~ "$flag" ]]; then
+        echo 'on'
+    else
+        echo 'off'
+    fi
+}
+
+function is_flag_set
+{
+    local flag=${@:1}
+    if [[ "$g_flags" =~ "$flag" ]]; then
+        echo 'true'
+    else
+        echo 'false'
+    fi
 }
 
 function create_worker_generalparams
@@ -106,9 +103,10 @@ function create_worker_generalparams
         --ok-label 'Next' \
         --no-cancel \
         --form 'General Parameters' $HEIGHT $WIDTH 10 \
-        'Name' 1 1 "${g_allGeneralParameters[LOTUS_CUSTOM_NAME]}" 1 20 20 0 \
-        'Port' 2 1 "${g_allGeneralParameters[LOTUS_CUSTOM_PORT]}" 2 20 20 0 \
-        'GPUs' 3 1 "${g_allGeneralParameters[CUDA_VISIBLE_DEVICES]}" 3 20 20 0 \
+        'Name' 1 1 "$g_name" 1 20 20 0 \
+        'Port' 2 1 "$g_port" 2 20 20 0 \
+        'GPUs' 3 1 "$g_gpus" 3 20 20 0 \
+        'CPU Group' 4 1 "$g_cpuGroup" 4 20 20 0 \
         3>&1 1>&2 2>&3 3>&-)
     
     local result=$?
@@ -119,10 +117,11 @@ function create_worker_generalparams
     esac
 
     if [ -n "$generalParams" ]; then
-        read -a strarr <<< "$generalParams"
-        g_allGeneralParameters[LOTUS_CUSTOM_NAME]=${strarr[0]}
-        g_allGeneralParameters[LOTUS_CUSTOM_PORT]=${strarr[1]}
-        g_allGeneralParameters[CUDA_VISIBLE_DEVICES]=${strarr[2]}
+        readarray -t strarr <<< "$generalParams"
+        g_name=${strarr[0]}
+        g_port=${strarr[1]}
+        g_gpus=${strarr[2]}
+        g_cpuGroup=${strarr[3]}
     fi
 
     return $state
@@ -130,10 +129,8 @@ function create_worker_generalparams
 
 function create_worker_type
 {
-    declare type
-
     local state=$E_CREATE_QUIT
-    type=$(dialog \
+    g_type=$(dialog \
         --title 'Create Worker' \
         --backtitle 'Lotus Worker Manager' \
         --ok-label 'Next' \
@@ -148,14 +145,9 @@ function create_worker_type
         3>&1 1>&2 2>&3 3>&-)
 
     local result=$?
-    if [ -n "$type" ]; then
-	    reset_all_types	
-    	[[ -v g_allTypes[$type] ]] && g_allTypes[$type]=true
-    fi
-
     case $result in
         $DIALOG_NEXT ) 	
-            if [[ "${g_allTypes[Seal]}" == "true" ]]; then
+            if [[ "$g_type" == "Seal" ]]; then
                 state=$E_CREATE_TASKS
             else
                 state=$E_CREATE_SUMMARY
@@ -170,10 +162,8 @@ function create_worker_type
 
 function create_worker_tasks
 {
-    declare tasks
-
     local state=$E_CREATE_QUIT
-    tasks=$(dialog \
+    g_tasks=$(dialog \
         --title 'Creater Worker' \
         --backtitle 'Lotus Worker Manager' \
         --ok-label 'Next' \
@@ -182,25 +172,17 @@ function create_worker_tasks
 	    --no-cancel \
         --no-tags \
         --checklist 'Select Tasks' $HEIGHT $WIDTH 10 \
-        LOTUS_CUSTOM_ADDPIECE               'AddPiece'               $(is_task_enabled LOTUS_CUSTOM_ADDPIECE) \
-        LOTUS_CUSTOM_PRECOMMIT1             'PreCommit1'             $(is_task_enabled LOTUS_CUSTOM_PRECOMMIT1) \
-        LOTUS_CUSTOM_PRECOMMIT2             'PreCommit2'             $(is_task_enabled LOTUS_CUSTOM_PRECOMMIT2) \
-        LOTUS_CUSTOM_COMMIT                 'Commit'                 $(is_task_enabled LOTUS_CUSTOM_COMMIT) \
-        LOTUS_CUSTOM_UNSEAL                 'Unseal'                 $(is_task_enabled LOTUS_CUSTOM_UNSEAL) \
-        LOTUS_CUSTOM_REPLICA_UPDATE         'Replica Update'         $(is_task_enabled LOTUS_CUSTOM_REPLICA_UPDATE) \
-        LOTUS_CUSTOM_PROVE_REPLICA_UPDATE2  'Prove Replica Update 2' $(is_task_enabled LOTUS_CUSTOM_PROVE_REPLICA_UPDATE2) \
-        LOTUS_CUSTOM_REGEN_SECTOR_KEY       'Regen Sector Key'       $(is_task_enabled LOTUS_CUSTOM_REGEN_SECTOR_KEY) \
+        AP  'AddPiece'               $(is_task_enabled AP) \
+        PC1 'PreCommit1'             $(is_task_enabled PC1) \
+        PC2 'PreCommit2'             $(is_task_enabled PC2) \
+        _C2 'Commit'                 $(is_task_enabled _C2) \
+        UNS 'Unseal'                 $(is_task_enabled UNS) \
+        RU  'Replica Update'         $(is_task_enabled RU) \
+        PR2 'Prove Replica Update 2' $(is_task_enabled PR2) \
+        GSK 'Regen Sector Key'       $(is_task_enabled GSK) \
         3>&1 1>&2 2>&3 3>&-)
 
     local result=$?
-    if [ -n "$tasks" ]; then
-        reset_all_tasks
-        read -a strarr <<< "$tasks"
-        for task in "${strarr[@]}"; do
-            [[ -v g_allTasks[$task] ]] && g_allTasks[$task]=true
-        done
-    fi
-
     case $result in
         $DIALOG_NEXT ) 
             state=$E_CREATE_SUMMARY 
@@ -219,32 +201,30 @@ function create_worker_summary_finish
     mkdir -p $wrepopath/tmpdir
 
     declare exports
-    exports+="export LOTUS_WORKER_PATH=$wrepopath;"
-    exports+="export TMPDIR=$wrepopath/tmpdir;"
+    exports+="export BELLMAN_CPU_UTILIZATION=$g_cpuUtilization\n"
+    exports+="export TMPDIR=$wrepopath/tmpdir\n"
+    exports+="export CUDA_VISIBLE_DEVICES=$g_gpus\n"
+    exports+="export LOTUS_WORKER_PATH=$wrepopath\n"
 
-    for param in "${!g_allGeneralParameters[@]}"; do
-        exports+="export ${param}=${g_allGeneralParameters[${param}]}"
-    done
+    if [[ "$g_type" == "Seal" ]]; then
+        exports+="export LOTUS_CUSTOM_ADDPIECE=$(is_task_set AP)\n"
+        exports+="export LOTUS_CUSTOM_PRECOMMIT1=$(is_task_set PC1)\n"
+        exports+="export LOTUS_CUSTOM_PRECOMMIT2=$(is_task_set PC2)\n"
+        exports+="export LOTUS_CUSTOM_COMMIT=$(is_task_set _C2)\n"
+        exports+="export LOTUS_CUSTOM_UNSEAL=$(is_task_set UNS)\n"
+        exports+="export LOTUS_CUSTOM_REPLICA_UPDATE=$(is_task_set RU)\n"
+        exports+="export LOTUS_CUSTOM_PROVE_REPLICA_UPDATE2=$(is_task_set PR2)\n"
+        exports+="export LOTUS_CUSTOM_REGEN_SECTOR_KEY=$(is_task_set GSK)\n"
+    else
+        exports+="export LOTUS_CUSTOM_WINDOWPOST=$(is_type_set WdPoSt)\n"
+        exports+="export LOTUS_CUSTOM_WINNINGPOST=$(is_type_set WinPoSt)\n"
+    fi
+    
+    exports+="export LOTUS_CUSTOM_PORT=$g_port\n"
+    exports+="export LOTUS_CUSTOM_CPUGROUP=$g_cpuGroup\n"
+    exports+="export FIL_PROOFS_USE_MULTICORE_SDR=$(is_flag_set SDR)\n"
 
-    for param in "${!g_allAdvancedParameters[@]}"; do
-        exports+="export ${param}=${g_allAdvancedParameters[${param}]}"
-    done
-
-    for flag in "${!g_allFlags[@]}"; do
-        exports+="export ${flag}=${g_allFlags[${flag}]}"
-    done
-
-    if [[ "${g_allTypes[Seal]}" == "true" ]]; then
-        for task in "${!g_allTasks[@]}"; do
-            exports+="export ${task}=${g_allTasks[${task}]};"
-        done
-    elif [[ "${g_allTypes[WdPoSt]}" == "true" ]]; then
-        exports+="export LOTUS_CUSTOM_WINDOWPOST=true"
-    elif [[ "${g_allTypes[WinPoSt]}" == "true" ]]; then
-        exports+="export LOTUS_CUSTOM_WINNINGPOST=true"
-    fi        
-
-    echo "$exports" | tee $wrepopath/$g_name.env
+    echo -e "$exports" | tee $wrepopath/$g_name.env
 
     dialog --title 'Create Worker' \
            --backtitle 'Lotus Worker Manager' \
@@ -256,17 +236,13 @@ function create_worker_summary
 {
     declare summary
     summary+="Worker will be created:\n\n"
-    summary+="Name:   ${g_allGeneralParameters[LOTUS_CUSTOM_NAME]}\n"
-    summary+="Port:   ${g_allGeneralParameters[LOTUS_CUSTOM_PORT]}\n"
+    summary+="Name:   $g_name\n"
+    summary+="Port:   $g_port\n"
     
-    if [[ "${g_allTypes[Seal]}" == "true" ]]; then
-	summary+="Tasks:  $g_tasks\n\n"
-    elif [[ "${g_allTypes[WdPoSt]}" == "true" ]]; then
-	summary+="Tasks:  WindowPoSt\n\n"
-    elif [[ "${g_allTypes[WinPoSt]}" == "true" ]]; then
-	summary+="Tasks:  WinningPoSt\n\n"
+    if [[ "$g_type" == "Seal" ]]; then
+	    summary+="Tasks:  $g_tasks\n\n"
     else
-	summary+="Tasks:  Unknown\n\n"
+        summary+="Tasks:  $g_type\n\n"
     fi
 
     summary+="Proceed?"
@@ -287,7 +263,7 @@ function create_worker_summary
             create_worker_summary_finish
             ;;
         $DIALOG_BACK ) 
-            if [[ "${g_allTypes[Seal]}" == "true" ]]; then
+            if [[ "$g_type" == "Seal" ]]; then
                 state=$E_CREATE_TASKS
             else
                 state=$E_CREATE_TYPE
@@ -311,27 +287,28 @@ function create_worker_advanced_page1
 	    --ok-label 'Next' \
 	    --no-cancel \
 	    --form 'Advanced Parameters' $HEIGHT $WIDTH 10 \
-        'Bellman CPU Utilization' 1 1 "${g_allAdvancedParameters[BELLMAN_CPU_UTILIZATION]}" 1 20 20 0 \
+        'CPU Utilization' 1 1 "$g_cpuUtilization" 1 20 20 0 \
         3>&1 1>&2 2>&3 3>&-)
 
     local result=$?
     case $result in
-	$DIALOG_NEXT )
-        read -a strarr <<< "$advancedParams"
-        g_allAdvancedParameters[BELLMAN_CPU_UTILIZATION]=${strarr[0]}
-	    state=$E_CREATE_ADVANCED_PAGE2
-	    ;;
+        $DIALOG_NEXT )
+            state=$E_CREATE_ADVANCED_PAGE2
+            ;;
     esac
+
+    if [ -n "$advancedParams" ]; then
+        readarray -t strarr <<< "$advancedParams"
+        g_cpuUtilization=${strarr[0]}
+    fi
 
     return $state
 }
 
 function create_worker_advanced_page2
 {
-    declare advancedFlags
-
     local state=$E_CREATE_ADVANCED_QUIT
-    advancedFlags=$(dialog \
+    g_flags=$(dialog \
 		--title 'Create Worker' \
 		--backtitle 'Lotus Worker Manager' \
 		--extra-button \
@@ -339,7 +316,7 @@ function create_worker_advanced_page2
 		--no-cancel \
 		--no-tags \
 		--checklist 'Advanced Flags' $HEIGHT $WIDTH 10 \
-        FIL_PROOFS_USE_MULTICORE_SDR 'Use Multicore SDR' $(is_flag_enabled FIL_PROOFS_USE_MULTICORE_SDR) \
+        SDR 'Use Multicore SDR' $(is_flag_enabled SDR) \
         3>&1 1>&2 2>&3 3>&-)
 
     local result=$?
@@ -348,14 +325,6 @@ function create_worker_advanced_page2
             state=$E_CREATE_ADVANCED_PAGE1
             ;;
     esac
-
-    if [ -n "$g_advancedFlags" ]; then
-        reset_all_flags
-        read -a strarr <<< "$advancedFlags"
-        for flag in "${strarr[@]}"; do
-            g_allFlags["$flag"]=true
-        done
-    fi
 
     return $state
 }
@@ -391,7 +360,7 @@ function create_worker
 
 function delete_worker_delete
 {
-    local wrepopath=${@:1}
+    local wrepopath="$HOME/.lotusworkers/$g_name"
     dialog --yesno "Delete $g_name?" $HEIGHT $WIDTH 3>&1 1>&2 2>&3 3>&-
 
     local result=$?
@@ -399,25 +368,24 @@ function delete_worker_delete
         $DIALOG_YES )
             rm -R $wrepopath
             dialog --msgbox "$g_name deleted!" $HEIGHT $WIDTH 3>&1 1>&2 2>&3 3>&-
+            g_name=''
             ;;
     esac
 }
 
 function delete_worker
 {
-    declare name
-    name=$(dialog \
+    g_name=$(dialog \
         --title 'Delete Worker' \
         --backtitle 'Lotus Worker Manager' \
         --ok-label 'Delete' \
-        --inputbox "$label" $HEIGHT $WIDTH "$name" \
+        --inputbox 'Name' $HEIGHT $WIDTH '' \
         3>&1 1>&2 2>&3 3>&-)
 
     local result=$?
-    local wrepopath="$HOME/.lotusworkers/$name"
     case $result in
         $DIALOG_OK ) 
-            delete_worker_delete $wrepopath
+            delete_worker_delete
             ;;
     esac
 }
