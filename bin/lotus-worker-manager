@@ -86,9 +86,9 @@ function is_flag_set
 {
     local flag=${@:1}
     if [[ "$g_flags" =~ "$flag" ]]; then
-        echo 'true'
+        echo '1'
     else
-        echo 'false'
+        echo '0'
     fi
 }
 
@@ -115,6 +115,9 @@ function create_worker_generalparams
             state=$E_CREATE_TYPE 
             ;;
     esac
+
+    echo "generalParams is $generalParams"
+    read -n 1
 
     if [ -n "$generalParams" ]; then
         readarray -t strarr <<< "$generalParams"
