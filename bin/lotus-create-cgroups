@@ -1,109 +1,39 @@
 #!/usr/bin/env bash
 
-readonly g_tmpfile=$(mktemp /tmp/XXXXXX.conf)
-readonly DIALOG_OK=0
-readonly DIALOG_CANCEL=1
-readonly DIALOG_HELP=2
-readonly DIALOG_EXTRA=3
-readonly DIALOG_ITEM_HELP=4
-readonly DIALOG_ESC=255
-readonly HEIGHT=0
-readonly WIDTH=0
-
-for i in \
-	E_CREATE_CPUPARAMS E_CREATE_OPTIONS E_CREATE_OWNERSHIP E_CREATE_SUMMARY E_CREATE_ADVANCED E_CREATE_QUIT; do \
-	readonly ${i}=$((x++)); done
-
-declare g_cgname
-declare g_cpus
-declare g_mems
-declare g_ccxspercpu
-declare g_coresperccx
-declare g_hyperthreading
-declare g_uid
-declare g_gid
-
+# Usage: generatecgdef $cgname $uid $gid $cpus $mems $tmpfile
 function generatecgdef
 {
-    printf "group $g_cgname {perm{task{uid=$g_uid;gid=$g_gid;}admin{uid=$g_uid;gid=$g_gid;}}cpuset{cpuset.cpus=$g_cpus;cpuset.mems=$g_mems;}}" >> $g_tmpfile
-    echo "$g_cgname :: cpus = $g_cpus & mems = $g_mems"
+    cat << EOT >> $6
+    group $1 {
+        perm {
+            task {
+                uid = $2;
+                gid = $3;
+            }
+            admin {
+                uid = $2;
+                gid = $3;
+            }
+        }
+        cpuset {
+            cpuset.cpus = $4;
+            cpuset.mems = $5;
+        }
+    }
+EOT
+    echo "$1 :: cpus = $4 & mems = $5"
 }
 
 while [[ "$correct" != "y" ]]
 do
   echo "See https://en.wikipedia.org/wiki/Epyc#Second_generation_Epyc_(Rome)"
-  read -p "How many CPUs? > "                    -i $cpus -e cpus
-  read -p "How many core complexes per CPU? > "  -i $ccxspercpu -e ccxspercpu
-  read -p "How many cores per complex? > "       -i $coresperccx -e coresperccx
-  read -p "Hyperthreading? [y/n] > "             -i $hyperthreading -e hyperthreading
-  read -p "Which user will own the cgroups? > "  -i $uid -e uid
-  read -p "Which group will own the cgroups? > " -i $gid -e gid
-  read -p "Is the above correct? [y/n] > "       -e correct
-done
-
-function create_cgroup_cpuparams
-{
-	declare text
-
-	local state=$E_CREATE_QUIT
-	while true; do
-		text=$(dialog --title 'Create Cgroup' \
-					  --backtitle 'Lotus Cgroup Manager' \
-					  --ok-label 'Next' \
-					  --form 'CPU Parameters' $HEIGHT $WIDTH 10 \
-					  'How many CPUs?' 1 1 '' \
-					  'How many core complexes per CPU?' 2 1 '' \
-					  'How many cores per complex?' 3 1 '' \
-					  3>&1 1>&2 2>&3 3>&-)
-		
-		local result=$?
-		IFS="\n"
-		read -a strarr <<< "$text"
-		g_cpus=${strarr[0]}
-		g_ccxspercpu=${strarr[1]}
-		g_coresperccx=${strarr[2]}
-
-		case $result in
-			$DIALOG_OK ) state=$E_CREATE_OPTIONS;;
-		esac
-	done
-
-	return $state
-}
-
-function create_cgroup
-{
-	local state=$E_CREATE_CPUPARAMS
-	while [[ $state -ne $E_CREATE_QUIT ]]; do
-		case $state in	
-			$E_CREATE_CPUPARAMS ) create_cgroup_cpuparams ;;
-			$E_CREATE_OWNERSHIP ) create_cgroup_ownership ;;
-			$E_CREATE_SUMMARY ) create_cgroup_summary ;;
-			$E_CREATE_ADVANCED ) create_cgroup_advanced ;;
-		esac
-		state=$?
-	done
-}
-
-while true; do
-	selection=$(dialog --title 'Main Menu' \
-					   --backtitle 'Lotus Cgroup Manager' \
-					   --clear \
-					   --cancel-label 'Quit'
-					   --menu 'Please Select' $HEIGHT $WIDTH 4 \
-					   1 'Create Cgroup' \
-					   3>&1 1>&2 2>&3 3>&-)
-
-	exit_status=$?
-	case $exit_status in
-		$DIALOG_CANCEL | $DIALOG_ESC )
-			clear; echo 'Lotus Cgroup Manager Terminated.'
-			exit ;;
-	esac
-
-	case $selection in
-		1 ) create_cgroup ;;
-	esac
+  read -p "How many CPUs? >"                    -i $cpus -e cpus
+  read -p "How many core complexes per CPU? >"  -i $ccxspercpu -e ccxspercpu
+  read -p "How many cores per complex? >"       -i $coresperccx -e coresperccx
+  read -p "Hyperthreading? [y/n] >"             -i $hyperthreading -e hyperthreading
+  read -p "Which user will own the cgroups? >"  -i $uid -e uid
+  read -p "Which group will own the cgroups? >" -i $gid -e gid
+  read -p "Is the above correct? [y/n] >"       -e correct
 done
 
 # Double ccx count if hyperthreading is enabled
@@ -115,6 +45,7 @@ esac
 let allccxs=$hyperthreads*$cpus*$ccxspercpu
 let allcores=$allccxs*$coresperccx
 
+tmpfile=$(mktemp /tmp/cgconfig.XXXXXX.conf)
 cgname='all'
 
 cpuinfo="0-$(expr $allcores - 1)"
