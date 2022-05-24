@@ -19,8 +19,7 @@ readonly WIDTH=0
 
 for i in \
     E_CREATE_GENERALPARAMS E_CREATE_TYPE E_CREATE_TASKS E_CREATE_SUMMARY E_CREATE_ADVANCED E_CREATE_QUIT \
-    E_MODIFY_GENERALPARAMS E_MODIFY_TYPE E_MODIFY_TASKS E_MODIFY_SUMMARY E_MODIFY_ADVANCED E_MODIFY_QUIT \
-    E_CREATE_ADVANCED_PAGE1 E_CREATE_ADVANCED_PAGE2 E_CREATE_ADVANCED_QUIT; do \
+    E_CREATE_ADVANCED_PARAMETERS E_CREATE_ADVANCED_FLAGS E_CREATE_ADVANCED_QUIT; do \
     readonly ${i}=$((x++)); done
 
 declare g_name
@@ -31,6 +30,8 @@ declare g_cpuUtilization='0.01'
 declare g_tasks
 declare g_flags='SDR'
 declare g_cpuGroup='all'
+declare g_generalParams
+declare g_advancedParams
 
 function is_task_enabled
 {
@@ -92,12 +93,9 @@ function is_flag_set
     fi
 }
 
-function create_worker_generalparams
+function worker_generalparams_dialog
 {
-    declare generalParams
-
-    local state=$E_CREATE_QUIT
-    generalParams=$(dialog \
+    g_generalParams=$(dialog \
         --title 'Create Worker' \
         --backtitle 'Lotus Worker Manager' \
         --ok-label 'Next' \
@@ -108,28 +106,10 @@ function create_worker_generalparams
         'GPUs' 3 1 "$g_gpus" 3 20 20 0 \
         'CPU Group' 4 1 "$g_cpuGroup" 4 20 20 0 \
         3>&1 1>&2 2>&3 3>&-)
-    
-    local result=$?
-    case $result in
-        $DIALOG_NEXT )
-            state=$E_CREATE_TYPE 
-            ;;
-    esac
-
-    if [ -n "$generalParams" ]; then
-        readarray -t strarr <<< "$generalParams"
-        g_name=${strarr[0]}
-        g_port=${strarr[1]}
-        g_gpus=${strarr[2]}
-        g_cpuGroup=${strarr[3]}
-    fi
-
-    return $state
 }
 
-function create_worker_type
+function worker_type_dialog
 {
-    local state=$E_CREATE_QUIT
     g_type=$(dialog \
         --title 'Create Worker' \
         --backtitle 'Lotus Worker Manager' \
@@ -143,9 +123,113 @@ function create_worker_type
         WdPoSt 'WindowPoSt' $(is_type_enabled WdPoSt) \
         WinPoSt 'WinningPoSt' $(is_type_enabled WinPoSt) \
         3>&1 1>&2 2>&3 3>&-)
+}
 
-    local result=$?
-    case $result in
+function worker_advanced_parameters_dialog
+{
+    g_advancedParams=$(dialog \
+	    --title 'Create Worker' \
+	    --backtitle 'Lotus Worker Manager' \
+	    --ok-label 'Next' \
+	    --no-cancel \
+	    --form 'Advanced Parameters' $HEIGHT $WIDTH 10 \
+        'CPU Utilization' 1 1 "$g_cpuUtilization" 1 20 20 0 \
+        3>&1 1>&2 2>&3 3>&-)
+}
+
+function worker_advanced_flags_dialog
+{
+    g_flags=$(dialog \
+		--title 'Create Worker' \
+		--backtitle 'Lotus Worker Manager' \
+		--extra-button \
+		--extra-label 'Back' \
+		--no-cancel \
+		--no-tags \
+		--checklist 'Advanced Flags' $HEIGHT $WIDTH 10 \
+        SDR 'Use Multicore SDR' $(is_flag_enabled SDR) \
+        3>&1 1>&2 2>&3 3>&-)
+}
+
+function worker_tasks_dialog
+{
+    g_tasks=$(dialog \
+        --title 'Creater Worker' \
+        --backtitle 'Lotus Worker Manager' \
+        --ok-label 'Next' \
+        --extra-button \
+        --extra-label 'Back' \
+        --no-cancel \
+        --no-tags \
+        --checklist 'Select Tasks' $HEIGHT $WIDTH 10 \
+        AP  'AddPiece'               $(is_task_enabled AP) \
+        PC1 'PreCommit1'             $(is_task_enabled PC1) \
+        PC2 'PreCommit2'             $(is_task_enabled PC2) \
+        _C2 'Commit'                 $(is_task_enabled _C2) \
+        UNS 'Unseal'                 $(is_task_enabled UNS) \
+        RU  'Replica Update'         $(is_task_enabled RU) \
+        PR2 'Prove Replica Update 2' $(is_task_enabled PR2) \
+        GSK 'Regen Sector Key'       $(is_task_enabled GSK) \
+        3>&1 1>&2 2>&3 3>&-)
+}
+
+function worker_summary_dialog
+{
+    declare summary
+    summary+="Worker will be created:\n\n"
+    summary+="Name:   $g_name\n"
+    summary+="Port:   $g_port\n"
+    
+    if [[ "$g_type" == "Seal" ]]; then
+	    summary+="Tasks:  $g_tasks\n\n"
+    else
+        summary+="Tasks:  $g_type\n\n"
+    fi
+
+    summary+="Proceed?"
+
+    dialog --title 'Create Worker' \
+        --backtitle 'Lotus Worker Manager' \
+        --ok-label 'Finish' \
+        --extra-button \
+        --extra-label 'Back' \
+        --cancel-label 'Advanced' \
+        --yesno "${summary}" $HEIGHT $WIDTH \
+        3>&1 1>&2 2>&3 3>&-
+}
+
+function create_worker_generalparams
+{
+    local state=$E_CREATE_QUIT
+    worker_generalparams_dialog
+
+    case $? in
+        $DIALOG_NEXT )
+            state=$E_CREATE_TYPE 
+            ;;
+    esac
+
+    worker_generalparams_postprocessing
+    return $state
+}
+
+function worker_generalparams_postprocessing
+{
+    if [ -n "$g_generalParams" ]; then
+        readarray -t strarr <<< "$g_generalParams"
+        g_name=${strarr[0]}
+        g_port=${strarr[1]}
+        g_gpus=${strarr[2]}
+        g_cpuGroup=${strarr[3]}
+    fi
+}
+
+function create_worker_type
+{
+    local state=$E_CREATE_QUIT
+    worker_type_dialog
+    
+    case $? in
         $DIALOG_NEXT ) 	
             if [[ "$g_type" == "Seal" ]]; then
                 state=$E_CREATE_TASKS
@@ -163,27 +247,9 @@ function create_worker_type
 function create_worker_tasks
 {
     local state=$E_CREATE_QUIT
-    g_tasks=$(dialog \
-        --title 'Creater Worker' \
-        --backtitle 'Lotus Worker Manager' \
-        --ok-label 'Next' \
-	    --extra-button \
-        --extra-label 'Back' \
-	    --no-cancel \
-        --no-tags \
-        --checklist 'Select Tasks' $HEIGHT $WIDTH 10 \
-        AP  'AddPiece'               $(is_task_enabled AP) \
-        PC1 'PreCommit1'             $(is_task_enabled PC1) \
-        PC2 'PreCommit2'             $(is_task_enabled PC2) \
-        _C2 'Commit'                 $(is_task_enabled _C2) \
-        UNS 'Unseal'                 $(is_task_enabled UNS) \
-        RU  'Replica Update'         $(is_task_enabled RU) \
-        PR2 'Prove Replica Update 2' $(is_task_enabled PR2) \
-        GSK 'Regen Sector Key'       $(is_task_enabled GSK) \
-        3>&1 1>&2 2>&3 3>&-)
+    worker_tasks_dialog
 
-    local result=$?
-    case $result in
+    case $? in
         $DIALOG_NEXT ) 
             state=$E_CREATE_SUMMARY 
             ;;
@@ -234,31 +300,10 @@ function create_worker_summary_finish
 
 function create_worker_summary
 {
-    declare summary
-    summary+="Worker will be created:\n\n"
-    summary+="Name:   $g_name\n"
-    summary+="Port:   $g_port\n"
-    
-    if [[ "$g_type" == "Seal" ]]; then
-	    summary+="Tasks:  $g_tasks\n\n"
-    else
-        summary+="Tasks:  $g_type\n\n"
-    fi
-
-    summary+="Proceed?"
-    
     local state=$E_CREATE_QUIT
-    dialog --title 'Create Worker' \
-           --backtitle 'Lotus Worker Manager' \
-           --ok-label 'Finish' \
-           --extra-button \
-           --extra-label 'Back' \
-	       --cancel-label 'Advanced' \
-           --yesno "${summary}" $HEIGHT $WIDTH \
-           3>&1 1>&2 2>&3 3>&-
+    worker_summary_dialog
 
-    local result=$?
-    case $result in
+    case $? in
         $DIALOG_FINISH ) 
             create_worker_summary_finish
             ;;
@@ -276,53 +321,37 @@ function create_worker_summary
     return $state
 }
 
-function create_worker_advanced_page1
+function create_worker_advanced_parameters
 {
-    declare advancedParams
-
     local state=$E_CREATE_ADVANCED_QUIT
-    advancedParams=$(dialog \
-	    --title 'Create Worker' \
-	    --backtitle 'Lotus Worker Manager' \
-	    --ok-label 'Next' \
-	    --no-cancel \
-	    --form 'Advanced Parameters' $HEIGHT $WIDTH 10 \
-        'CPU Utilization' 1 1 "$g_cpuUtilization" 1 20 20 0 \
-        3>&1 1>&2 2>&3 3>&-)
+    worker_advanced_parameters_dialog
 
-    local result=$?
-    case $result in
+    case $? in
         $DIALOG_NEXT )
-            state=$E_CREATE_ADVANCED_PAGE2
+            state=$E_CREATE_ADVANCED_FLAGS
             ;;
     esac
 
-    if [ -n "$advancedParams" ]; then
-        readarray -t strarr <<< "$advancedParams"
-        g_cpuUtilization=${strarr[0]}
-    fi
-
+    worker_advanced_parameters_postprocessing
     return $state
 }
 
-function create_worker_advanced_page2
+function worker_advanced_parameters_postprocessing
+{
+    if [ -n "$g_advancedParams" ]; then
+        readarray -t strarr <<< "$g_advancedParams"
+        g_cpuUtilization=${strarr[0]}
+    fi
+}
+
+function create_worker_advanced_flags
 {
     local state=$E_CREATE_ADVANCED_QUIT
-    g_flags=$(dialog \
-		--title 'Create Worker' \
-		--backtitle 'Lotus Worker Manager' \
-		--extra-button \
-		--extra-label 'Back' \
-		--no-cancel \
-		--no-tags \
-		--checklist 'Advanced Flags' $HEIGHT $WIDTH 10 \
-        SDR 'Use Multicore SDR' $(is_flag_enabled SDR) \
-        3>&1 1>&2 2>&3 3>&-)
+    worker_advanced_flags_dialog
 
-    local result=$?
-    case $result in
+    case $? in
         $DIALOG_BACK )
-            state=$E_CREATE_ADVANCED_PAGE1
+            state=$E_CREATE_ADVANCED_PARAMETERS
             ;;
     esac
 
@@ -331,11 +360,11 @@ function create_worker_advanced_page2
 
 function create_worker_advanced
 {
-    local state=$E_CREATE_ADVANCED_PAGE1
+    local state=$E_CREATE_ADVANCED_PARAMETERS
     while [[ $state -ne $E_CREATE_ADVANCED_QUIT ]]; do
         case $state in
-            $E_CREATE_ADVANCED_PAGE1 ) create_worker_advanced_page1 ;;
-            $E_CREATE_ADVANCED_PAGE2 ) create_worker_advanced_page2 ;;
+            $E_CREATE_ADVANCED_PARAMETERS ) create_worker_advanced_parameters ;;
+            $E_CREATE_ADVANCED_FLAGS ) create_worker_advanced_flags ;;
         esac
         state=$?
     done
@@ -368,7 +397,6 @@ function delete_worker_delete
         $DIALOG_YES )
             rm -R $wrepopath
             dialog --msgbox "$g_name deleted!" $HEIGHT $WIDTH 3>&1 1>&2 2>&3 3>&-
-            g_name=''
             ;;
     esac
 }
@@ -410,9 +438,8 @@ while true; do
         --cancel-label 'Quit' \
         --menu 'Please Select' $HEIGHT $WIDTH 4 \
         1 'Create Worker' \
-        2 'Modify Worker' \
-        3 'Delete Worker' \
-        4 'List Workers' \
+        2 'Delete Worker' \
+        3 'List Workers' \
         3>&1 1>&2 2>&3 3>&-)
 
     exit_status=$?
@@ -424,8 +451,7 @@ while true; do
 
     case $selection in
         1 ) create_worker ;;
-        2 ) modify_worker ;;
-        3 ) delete_worker ;;
-        4 ) list_workers ;;
+        2 ) delete_worker ;;
+        3 ) list_workers ;;
     esac
 done
