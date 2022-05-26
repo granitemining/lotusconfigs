@@ -4,6 +4,12 @@
 ## DO NOT USE ON MAINNET!!
 ## Modifications by me :)
 
+if ! command -v lotus-miner &> /dev/null
+then
+    echo "Please install lotus-miner before continuing."
+    exit
+fi
+
 # Metrics at a glance
 # 2700 seconds = 45 minutes    (~1TiB/day)
 # 1350 seconds = 22.5 minutes  (~2TiB/day)

@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 
+if ! command -v lotus-worker &> /dev/null
+then
+    echo "Please install lotus-worker before continuing."
+    exit
+fi
+
 declare wreponame
 declare wrepopath
 

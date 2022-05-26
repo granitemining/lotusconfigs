@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 
+if ! command -v cgconfigparser &> /dev/null
+then
+    echo "Please install cgroup-tools before continuing."
+    exit
+fi
+
 # Usage: generatecgdef $cgname $uid $gid $cpus $mems $tmpfile
 function generatecgdef
 {

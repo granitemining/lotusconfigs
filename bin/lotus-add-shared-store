@@ -1,5 +1,23 @@
 #!/usr/bin/env bash
 
+if ! command -v lotus-worker &> /dev/null
+then
+    echo "Please install lotus-worker before continuing."
+    exit
+fi
+
+if ! command -v jq &> /dev/null
+then
+    echo "Please install jq before continuing."
+    exit
+fi
+
+if ! command -v sponge &> /dev/null
+then
+    echo "Please install sponge before continuing."
+    exit
+fi
+
 while :
 do
     read -p "Where is the shared store? [Ctrl-C to quit] > " -i $sharedstore -e sharedstore
