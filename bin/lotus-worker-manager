@@ -38,6 +38,7 @@ declare g_flags='SDR'
 declare g_cpuGroup='all'
 declare g_generalParams
 declare g_advancedParams
+declare g_bellmanCustomGpu
 
 function is_task_enabled
 {
@@ -139,7 +140,8 @@ function worker_advanced_parameters_dialog
 	    --ok-label 'Next' \
 	    --no-cancel \
 	    --form 'Advanced Parameters' $HEIGHT $WIDTH 10 \
-        'CPU Utilization' 1 1 "$g_cpuUtilization" 1 20 20 0 \
+        'CPU Utilization' 1 1 "$g_cpuUtilization" 1 20 40 0 \
+        'Bellman Custom GPU' 2 1 "$g_bellmanCustomGpu" 2 20 40 0 \
         3>&1 1>&2 2>&3 3>&-)
 }
 
@@ -296,6 +298,10 @@ function create_worker_summary_finish
     exports+="export LOTUS_CUSTOM_CPUGROUP=$g_cpuGroup\n"
     exports+="export FIL_PROOFS_USE_MULTICORE_SDR=$(is_flag_set SDR)\n"
 
+    if [ ! -z "$g_bellmanCustomGpu" ]; then
+        exports+="export BELLMAN_CUSTOM_GPU=$g_bellmanCustomGpu\n"
+    fi
+
     echo -e "$exports" | tee $wrepopath/$g_name.env
 
     dialog --title 'Create Worker' \
@@ -347,6 +353,7 @@ function worker_advanced_parameters_postprocessing
     if [ -n "$g_advancedParams" ]; then
         readarray -t strarr <<< "$g_advancedParams"
         g_cpuUtilization=${strarr[0]}
+        g_bellmanCustomGpu=${strarr[1]}
     fi
 }
 
