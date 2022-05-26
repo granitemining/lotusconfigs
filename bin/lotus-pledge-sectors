@@ -4,11 +4,11 @@
 ## DO NOT USE ON MAINNET!!
 ## Modifications by me :)
 
-if ! command -v lotus-miner &> /dev/null
-then
-    echo "Please install lotus-miner before continuing."
-    exit
-fi
+dir="${BASH_SOURCE%/*}"
+if [[ ! -d "$dir" ]]; then dir="$PWD"; fi
+. "$dir/check-dependencies"
+
+check_dependencies lotus-miner
 
 # Metrics at a glance
 # 2700 seconds = 45 minutes    (~1TiB/day)

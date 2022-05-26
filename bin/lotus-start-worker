@@ -1,16 +1,10 @@
 #!/usr/bin/env bash
 
-if ! command -v cgexec &> /dev/null
-then
-    echo "Please install cgroup-tools before continuing."
-    exit
-fi
+dir="${BASH_SOURCE%/*}"
+if [[ ! -d "$dir" ]]; then dir="$PWD"; fi
+. "$dir/check-dependencies"
 
-if ! command -v lotus-worker &> /dev/null
-then
-    echo "Please install lotus-worker before continuing."
-    exit
-fi
+check_dependencies cgexec lotus-worker
 
 declare wreponame
 declare wrepopath

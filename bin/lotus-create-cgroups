@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
 
-if ! command -v cgconfigparser &> /dev/null
-then
-    echo "Please install cgroup-tools before continuing."
-    exit
-fi
+dir="${BASH_SOURCE%/*}"
+if [[ ! -d "$dir" ]]; then dir="$PWD"; fi
+. "$dir/check-dependencies"
+
+check_dependencies cgconfigparser
 
 # Usage: generatecgdef $cgname $uid $gid $cpus $mems $tmpfile
 function generatecgdef
