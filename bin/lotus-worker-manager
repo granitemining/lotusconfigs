@@ -299,7 +299,7 @@ function create_worker_summary_finish
     exports+="export FIL_PROOFS_USE_MULTICORE_SDR=$(is_flag_set SDR)\n"
 
     if [ ! -z "$g_bellmanCustomGpu" ]; then
-        exports+="export BELLMAN_CUSTOM_GPU=$g_bellmanCustomGpu\n"
+        exports+="export BELLMAN_CUSTOM_GPU='$g_bellmanCustomGpu'\n"
     fi
 
     echo -e "$exports" | tee $wrepopath/$g_name.env
