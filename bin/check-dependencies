@@ -1,0 +1,11 @@
+function check_dependencies
+{
+    for var in "$@"
+    do
+        if ! command -v $var &> /dev/null
+        then
+            echo "Please install $var before continuing."
+            exit
+        fi
+    done
+}

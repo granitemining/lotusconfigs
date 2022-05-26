@@ -4,6 +4,12 @@
 ## DO NOT USE ON MAINNET!!
 ## Modifications by me :)
 
+dir="${BASH_SOURCE%/*}"
+if [[ ! -d "$dir" ]]; then dir="$PWD"; fi
+. "$dir/check-dependencies"
+
+check_dependencies lotus-miner
+
 # Metrics at a glance
 # 2700 seconds = 45 minutes    (~1TiB/day)
 # 1350 seconds = 22.5 minutes  (~2TiB/day)

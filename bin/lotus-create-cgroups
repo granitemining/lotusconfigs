@@ -1,5 +1,11 @@
 #!/usr/bin/env bash
 
+dir="${BASH_SOURCE%/*}"
+if [[ ! -d "$dir" ]]; then dir="$PWD"; fi
+. "$dir/check-dependencies"
+
+check_dependencies cgconfigparser
+
 # Usage: generatecgdef $cgname $uid $gid $cpus $mems $tmpfile
 function generatecgdef
 {
