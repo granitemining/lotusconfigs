@@ -179,7 +179,7 @@ function is_flag_of
 function is_flag_io
 {
     local flag=${@:1}
-    if $(is_flag_enabled); then
+    if $(is_flag_enabled $flag); then
         echo '1'
     else
         echo '0'
@@ -722,7 +722,7 @@ function create_worker_advanced_finetuning_c2_32g
 
     case $? in
         $DIALOG_NEXT )
-            state=$E_CREATE_ADVANCED_FLAGS
+            state=$E_CREATE_ADVANCED_FINETUNING_UNSEAL
             ;;
         $DIALOG_BACK )
             state=$E_CREATE_ADVANCED_FINETUNING_COMMIT1
@@ -730,6 +730,42 @@ function create_worker_advanced_finetuning_c2_32g
     esac
 
     worker_advanced_finetuning_c2_32g_postprocessing
+    return $state
+}
+
+function create_worker_advanced_finetuning_uns_32g
+{
+    local state=$E_CREATE_ADVANCED_QUIT
+    worker_advanced_finetuning_uns_32g_dialog
+
+    case $? in
+        $DIALOG_NEXT )
+            state=$E_CREATE_ADVANCED_FINETUNING_GET
+            ;;
+        $DIALOG_BACK )
+            state=$E_CREATE_ADVANCED_FINETUNING_COMMIT2
+            ;;
+    esac
+
+    worker_advanced_finetuning_uns_32g_postprocessing
+    return $state
+}
+
+function create_worker_advanced_finetuning_get_32g
+{
+    local state=$E_CREATE_ADVANCED_QUIT
+    worker_advanced_finetuning_get_32g_dialog
+
+    case $? in
+        $DIALOG_NEXT )
+            state=$E_CREATE_ADVANCED_FLAGS
+            ;;
+        $DIALOG_BACK )
+            state=$E_CREATE_ADVANCED_FINETUNING_UNSEAL
+            ;;
+    esac
+
+    worker_advanced_finetuning_get_32g_postprocessing
     return $state
 }
 
@@ -750,87 +786,121 @@ function create_worker_tasks
     return $state
 }
 
+function worker_advanced_next
+{
+    local current=${@:1}
+    local state=$E_CREATE_ADVANCED_QUIT
+
+    IFS=' '
+    read -a strarr <<< "$g_tasks"
+
+    for i in "${!strarr[@]}"; do
+        if [[ "${strarr[$i]}" = "${current}" ]]; then
+            ((i++)); current=$([ "${strarr[$i]}" ] && echo "${strarr[$i]}" || echo 'FLG')
+            break
+        fi
+    done
+
+    case $current in
+        ("AP")  state=$E_CREATE_ADVANCED_FINETUNING_ADDPIECE ;;
+        ("PC1") state=$E_CREATE_ADVANCED_FINETUNING_PRECOMMIT1 ;;
+        ("PC2") state=$E_CREATE_ADVANCED_FINETUNING_PRECOMMIT2 ;;
+        ("C1")  state=$E_CREATE_ADVANCED_FINETUNING_COMMIT1 ;;
+        ("_C2") state=$E_CREATE_ADVANCED_FINETUNING_COMMIT2 ;;
+        ("UNS") state=$E_CREATE_ADVANCED_FINETUNING_UNSEAL ;;
+        ("GET") state=$E_CREATE_ADVANCED_FINETUNING_GET ;;
+        ("FLG") state=$E_CREATE_ADVANCED_FLAGS ;;
+    esac
+    
+    return $state
+}
+
+function worker_advanced_prev
+{
+
+}
+
 function worker_advanced_finetuning_ap_32g_exports
 {
     if $(is_task_enabled AP); then
-        g_exports+="export AP_32G_BASE_MIN_MEMORY=$g_apBaseMinimumMemory"
-        g_exports+="export AP_32G_GPU_UTILIZATION=$g_apGpuUtilization"
-        g_exports+="export AP_32G_MAX_MEMORY=$g_apMaxMemory"
-        g_exports+="export AP_32G_MAX_PARALLELISM=$g_apMaxParallelism"
-        g_exports+="export AP_32G_MAX_PARALLELISM_GPU=$g_apMaxParallelismGpu"
-        g_exports+="export AP_32G_MIN_MEMORY=$g_apMinimumMemory"
+        g_exports+="export AP_32G_BASE_MIN_MEMORY=$g_apBaseMinimumMemory\n"
+        g_exports+="export AP_32G_GPU_UTILIZATION=$g_apGpuUtilization\n"
+        g_exports+="export AP_32G_MAX_MEMORY=$g_apMaxMemory\n"
+        g_exports+="export AP_32G_MAX_PARALLELISM=$g_apMaxParallelism\n"
+        g_exports+="export AP_32G_MAX_PARALLELISM_GPU=$g_apMaxParallelismGpu\n"
+        g_exports+="export AP_32G_MIN_MEMORY=$g_apMinimumMemory\n"
     fi
 }
 
 function worker_advanced_finetuning_pc1_32g_exports
 {
     if $(is_task_enabled PC1); then
-        g_exports+="export PC1_32G_BASE_MIN_MEMORY=$g_pc1BaseMinimumMemory"
-        g_exports+="export PC1_32G_GPU_UTILIZATION=$g_pc1GpuUtilization"
-        g_exports+="export PC1_32G_MAX_MEMORY=$g_pc1MaxMemory"
-        g_exports+="export PC1_32G_MAX_PARALLELISM=$g_pc1MaxParallelism"
-        g_exports+="export PC1_32G_MAX_PARALLELISM_GPU=$g_pc1MaxParallelismGpu"
-        g_exports+="export PC1_32G_MIN_MEMORY=$g_pc1MinimumMemory"
+        g_exports+="export PC1_32G_BASE_MIN_MEMORY=$g_pc1BaseMinimumMemory\n"
+        g_exports+="export PC1_32G_GPU_UTILIZATION=$g_pc1GpuUtilization\n"
+        g_exports+="export PC1_32G_MAX_MEMORY=$g_pc1MaxMemory\n"
+        g_exports+="export PC1_32G_MAX_PARALLELISM=$g_pc1MaxParallelism\n"
+        g_exports+="export PC1_32G_MAX_PARALLELISM_GPU=$g_pc1MaxParallelismGpu\n"
+        g_exports+="export PC1_32G_MIN_MEMORY=$g_pc1MinimumMemory\n"
     fi
 }
 
 function worker_advanced_finetuning_pc2_32g_exports
 {
     if $(is_task_enabled PC2); then
-        g_exports+="export PC2_32G_BASE_MIN_MEMORY=$g_pc2BaseMinimumMemory"
-        g_exports+="export PC2_32G_GPU_UTILIZATION=$g_pc2GpuUtilization"
-        g_exports+="export PC2_32G_MAX_MEMORY=$g_pc2MaxMemory"
-        g_exports+="export PC2_32G_MAX_PARALLELISM=$g_pc2MaxParallelism"
-        g_exports+="export PC2_32G_MAX_PARALLELISM_GPU=$g_pc2MaxParallelismGpu"
-        g_exports+="export PC2_32G_MIN_MEMORY=$g_pc2MinimumMemory"
+        g_exports+="export PC2_32G_BASE_MIN_MEMORY=$g_pc2BaseMinimumMemory\n"
+        g_exports+="export PC2_32G_GPU_UTILIZATION=$g_pc2GpuUtilization\n"
+        g_exports+="export PC2_32G_MAX_MEMORY=$g_pc2MaxMemory\n"
+        g_exports+="export PC2_32G_MAX_PARALLELISM=$g_pc2MaxParallelism\n"
+        g_exports+="export PC2_32G_MAX_PARALLELISM_GPU=$g_pc2MaxParallelismGpu\n"
+        g_exports+="export PC2_32G_MIN_MEMORY=$g_pc2MinimumMemory\n"
     fi
 }
 
 function worker_advanced_finetuning_c1_32g_exports
 {
     if $(is_task_enabled C1); then
-        g_exports+="export C1_32G_BASE_MIN_MEMORY=$g_c1BaseMinimumMemory"
-        g_exports+="export C1_32G_GPU_UTILIZATION=$g_c1GpuUtilization"
-        g_exports+="export C1_32G_MAX_MEMORY=$g_c1MaxMemory"
-        g_exports+="export C1_32G_MAX_PARALLELISM=$g_c1MaxParallelism"
-        g_exports+="export C1_32G_MAX_PARALLELISM_GPU=$g_c1MaxParallelismGpu"
-        g_exports+="export C1_32G_MIN_MEMORY=$g_c1MinimumMemory"
+        g_exports+="export C1_32G_BASE_MIN_MEMORY=$g_c1BaseMinimumMemory\n"
+        g_exports+="export C1_32G_GPU_UTILIZATION=$g_c1GpuUtilization\n"
+        g_exports+="export C1_32G_MAX_MEMORY=$g_c1MaxMemory\n"
+        g_exports+="export C1_32G_MAX_PARALLELISM=$g_c1MaxParallelism\n"
+        g_exports+="export C1_32G_MAX_PARALLELISM_GPU=$g_c1MaxParallelismGpu\n"
+        g_exports+="export C1_32G_MIN_MEMORY=$g_c1MinimumMemory\n"
     fi
 }
 
 function worker_advanced_finetuning_c2_32g_exports
 {
     if $(is_task_enabled C2); then
-        g_exports+="export C2_32G_BASE_MIN_MEMORY=$g_c2BaseMinimumMemory"
-        g_exports+="export C2_32G_GPU_UTILIZATION=$g_c2GpuUtilization"
-        g_exports+="export C2_32G_MAX_MEMORY=$g_c2MaxMemory"
-        g_exports+="export C2_32G_MAX_PARALLELISM=$g_c2MaxParallelism"
-        g_exports+="export C2_32G_MAX_PARALLELISM_GPU=$g_c2MaxParallelismGpu"
-        g_exports+="export C2_32G_MIN_MEMORY=$g_c2MinimumMemory"
+        g_exports+="export C2_32G_BASE_MIN_MEMORY=$g_c2BaseMinimumMemory\n"
+        g_exports+="export C2_32G_GPU_UTILIZATION=$g_c2GpuUtilization\n"
+        g_exports+="export C2_32G_MAX_MEMORY=$g_c2MaxMemory\n"
+        g_exports+="export C2_32G_MAX_PARALLELISM=$g_c2MaxParallelism\n"
+        g_exports+="export C2_32G_MAX_PARALLELISM_GPU=$g_c2MaxParallelismGpu\n"
+        g_exports+="export C2_32G_MIN_MEMORY=$g_c2MinimumMemory\n"
     fi
 }
 
 function worker_advanced_finetuning_uns_32g_exports
 {
     if $(is_task_enabled UNS); then
-        g_exports+="export UNS_32G_BASE_MIN_MEMORY=$g_unsBaseMinimumMemory"
-        g_exports+="export UNS_32G_GPU_UTILIZATION=$g_unsGpuUtilization"
-        g_exports+="export UNS_32G_MAX_MEMORY=$g_unsMaxMemory"
-        g_exports+="export UNS_32G_MAX_PARALLELISM=$g_unsMaxParallelism"
-        g_exports+="export UNS_32G_MAX_PARALLELISM_GPU=$g_unsMaxParallelismGpu"
-        g_exports+="export UNS_32G_MIN_MEMORY=$g_unsMinimumMemory"
+        g_exports+="export UNS_32G_BASE_MIN_MEMORY=$g_unsBaseMinimumMemory\n"
+        g_exports+="export UNS_32G_GPU_UTILIZATION=$g_unsGpuUtilization\n"
+        g_exports+="export UNS_32G_MAX_MEMORY=$g_unsMaxMemory\n"
+        g_exports+="export UNS_32G_MAX_PARALLELISM=$g_unsMaxParallelism\n"
+        g_exports+="export UNS_32G_MAX_PARALLELISM_GPU=$g_unsMaxParallelismGpu\n"
+        g_exports+="export UNS_32G_MIN_MEMORY=$g_unsMinimumMemory\n"
     fi
 }
 
 function worker_advanced_finetuning_get_32g_exports
 {
     if $(is_task_enabled GET); then
-        g_exports+="export GET_32G_BASE_MIN_MEMORY=$g_getBaseMinimumMemory"
-        g_exports+="export GET_32G_GPU_UTILIZATION=$g_getGpuUtilization"
-        g_exports+="export GET_32G_MAX_MEMORY=$g_getMaxMemory"
-        g_exports+="export GET_32G_MAX_PARALLELISM=$g_getMaxParallelism"
-        g_exports+="export GET_32G_MAX_PARALLELISM_GPU=$g_getMaxParallelismGpu"
-        g_exports+="export GET_32G_MIN_MEMORY=$g_getMinimumMemory"
+        g_exports+="export GET_32G_BASE_MIN_MEMORY=$g_getBaseMinimumMemory\n"
+        g_exports+="export GET_32G_GPU_UTILIZATION=$g_getGpuUtilization\n"
+        g_exports+="export GET_32G_MAX_MEMORY=$g_getMaxMemory\n"
+        g_exports+="export GET_32G_MAX_PARALLELISM=$g_getMaxParallelism\n"
+        g_exports+="export GET_32G_MAX_PARALLELISM_GPU=$g_getMaxParallelismGpu\n"
+        g_exports+="export GET_32G_MIN_MEMORY=$g_getMinimumMemory\n"
     fi
 }
 
@@ -846,17 +916,17 @@ function create_worker_summary_finish
     g_exports+="export LOTUS_WORKER_PATH=$wrepopath\n"
 
     if [[ "$g_type" == "Seal" ]]; then
-        g_exports+="export LOTUS_CUSTOM_ADDPIECE=$(is_task_set AP)\n"
-        g_exports+="export LOTUS_CUSTOM_PRECOMMIT1=$(is_task_set PC1)\n"
-        g_exports+="export LOTUS_CUSTOM_PRECOMMIT2=$(is_task_set PC2)\n"
-        g_exports+="export LOTUS_CUSTOM_COMMIT=$(is_task_set _C2)\n"
-        g_exports+="export LOTUS_CUSTOM_UNSEAL=$(is_task_set UNS)\n"
-        g_exports+="export LOTUS_CUSTOM_REPLICA_UPDATE=$(is_task_set RU)\n"
-        g_exports+="export LOTUS_CUSTOM_PROVE_REPLICA_UPDATE2=$(is_task_set PR2)\n"
-        g_exports+="export LOTUS_CUSTOM_REGEN_SECTOR_KEY=$(is_task_set GSK)\n"
+        g_exports+="export LOTUS_CUSTOM_ADDPIECE=$(is_task_tf AP)\n"
+        g_exports+="export LOTUS_CUSTOM_PRECOMMIT1=$(is_task_tf PC1)\n"
+        g_exports+="export LOTUS_CUSTOM_PRECOMMIT2=$(is_task_tf PC2)\n"
+        g_exports+="export LOTUS_CUSTOM_COMMIT=$(is_task_tf _C2)\n"
+        g_exports+="export LOTUS_CUSTOM_UNSEAL=$(is_task_tf UNS)\n"
+        g_exports+="export LOTUS_CUSTOM_REPLICA_UPDATE=$(is_task_tf RU)\n"
+        g_exports+="export LOTUS_CUSTOM_PROVE_REPLICA_UPDATE2=$(is_task_tf PR2)\n"
+        g_exports+="export LOTUS_CUSTOM_REGEN_SECTOR_KEY=$(is_task_tf GSK)\n"
     else
-        g_exports+="export LOTUS_CUSTOM_WINDOWPOST=$(is_type_set WdPoSt)\n"
-        g_exports+="export LOTUS_CUSTOM_WINNINGPOST=$(is_type_set WinPoSt)\n"
+        g_exports+="export LOTUS_CUSTOM_WINDOWPOST=$(is_type_tf WdPoSt)\n"
+        g_exports+="export LOTUS_CUSTOM_WINNINGPOST=$(is_type_tf WinPoSt)\n"
     fi
 
     if [[ "$g_type" == "Seal" ]]; then
@@ -871,7 +941,7 @@ function create_worker_summary_finish
 
     g_exports+="export LOTUS_CUSTOM_PORT=$g_port\n"
     g_exports+="export LOTUS_CUSTOM_CPUGROUP=$g_cpuGroup\n"
-    g_exports+="export FIL_PROOFS_USE_MULTICORE_SDR=$(is_flag_set SDR)\n"
+    g_exports+="export FIL_PROOFS_USE_MULTICORE_SDR=$(is_flag_io SDR)\n"
 
     if [ ! -z "$g_bellmanCustomGpu" ]; then
         g_exports+="export BELLMAN_CUSTOM_GPU='$g_bellmanCustomGpu'\n"
@@ -939,7 +1009,7 @@ function create_worker_advanced_flags
 
     case $? in
         $DIALOG_BACK )
-            state=$E_CREATE_ADVANCED_FINETUNING_COMMIT2
+            state=$E_CREATE_ADVANCED_FINETUNING_GET
             ;;
     esac
 
@@ -951,13 +1021,33 @@ function create_worker_advanced
     local state=$E_CREATE_ADVANCED_PARAMETERS
     while [[ $state -ne $E_CREATE_ADVANCED_QUIT ]]; do
         case $state in
-            $E_CREATE_ADVANCED_PARAMETERS ) create_worker_advanced_parameters ;;
-            $E_CREATE_ADVANCED_FINETUNING_ADDPIECE ) create_worker_advanced_finetuning_ap_32 ;;
-            $E_CREATE_ADVANCED_FINETUNING_PRECOMMIT1 ) create_worker_advanced_finetuning_pc1_32g ;;
-            $E_CREATE_ADVANCED_FINETUNING_PRECOMMIT2 ) create_worker_advanced_finetuning_pc2_32g ;;
-            $E_CREATE_ADVANCED_FINETUNING_COMMIT1 ) create_worker_advanced_finetuning_c1_32g ;;
-            $E_CREATE_ADVANCED_FINETUNING_COMMIT2 ) create_worker_advanced_finetuning_c2_32g ;;
-            $E_CREATE_ADVANCED_FLAGS ) create_worker_advanced_flags ;;
+            $E_CREATE_ADVANCED_PARAMETERS ) 
+                create_worker_advanced_parameters 
+                ;;
+            $E_CREATE_ADVANCED_FINETUNING_ADDPIECE ) 
+                create_worker_advanced_finetuning_ap_32 
+                ;;
+            $E_CREATE_ADVANCED_FINETUNING_PRECOMMIT1 ) 
+                create_worker_advanced_finetuning_pc1_32g 
+                ;;
+            $E_CREATE_ADVANCED_FINETUNING_PRECOMMIT2 ) 
+                create_worker_advanced_finetuning_pc2_32g 
+                ;;
+            $E_CREATE_ADVANCED_FINETUNING_COMMIT1 ) 
+                create_worker_advanced_finetuning_c1_32g 
+                ;;
+            $E_CREATE_ADVANCED_FINETUNING_COMMIT2 ) 
+                create_worker_advanced_finetuning_c2_32g 
+                ;;
+            $E_CREATE_ADVANCED_FINETUNING_UNSEAL ) 
+                create_worker_advanced_finetuning_uns_32g 
+                ;;
+            $E_CREATE_ADVANCED_FINETUNING_GET ) 
+                create_worker_advanced_finetuning_get_32g 
+                ;;
+            $E_CREATE_ADVANCED_FLAGS ) 
+                create_worker_advanced_flags 
+                ;;
         esac
         state=$?
     done
