@@ -26,8 +26,8 @@ readonly WIDTH=0
 for i in \
     E_CREATE_GENERALPARAMS E_CREATE_TYPE E_CREATE_TASKS E_CREATE_SUMMARY E_CREATE_ADVANCED E_CREATE_QUIT \
     E_CREATE_ADVANCED_PARAMETERS E_CREATE_ADVANCED_FLAGS E_CREATE_ADVANCED_QUIT \
-    E_CREATE_ADVANCED_FINETUNING_ADDPIECE E_CREATE_ADVANCED_FINETUNING_PRECOMMIT1 E_CREATE_ADVANCED_FINETUNING_PRECOMMIT2 \
-    E_CREATE_ADVANCED_FINETUNING_COMMIT1 E_CREATE_ADVANCED_FINETUNING_COMMIT2 E_CREATE_ADVANCED_FINETUNING_UNSEAL E_CREATE_ADVANCED_FINETUNING_GET; do \
+    E_CREATE_ADVANCED_FINETUNING_AP E_CREATE_ADVANCED_FINETUNING_PC1 E_CREATE_ADVANCED_FINETUNING_PC2 \
+    E_CREATE_ADVANCED_FINETUNING_C1 E_CREATE_ADVANCED_FINETUNING_C2 E_CREATE_ADVANCED_FINETUNING_UNS E_CREATE_ADVANCED_FINETUNING_GET; do \
     readonly ${i}=$((x++)); done
 
 declare g_name
@@ -111,19 +111,22 @@ declare g_getMinimumMemory
 function is_task_enabled
 {
     local task=${@:1}
-    [[ "$g_tasks" =~ "$task" ]] && true || false
+    [[ "$g_tasks" =~ (^|[[:space:]])"$task"($|[[:space:]]) ]] \
+    && true || false
 }
 
 function is_type_enabled
 {
     local type=${@:1}
-    [[ "$g_type" == "$type" ]] && true || false
+    [[ "$g_type" == "$type" ]] \
+    && true || false
 }
 
 function is_flag_enabled
 {
     local flag=${@:1}
-    [[ "$g_flags" =~ "$flag" ]] && true || false
+    [[ "$g_flags" =~ (^|[[:space:]])"$flag"($|[[:space:]]) ]] \
+    && true || false
 }
 
 function is_task_of
@@ -241,12 +244,12 @@ function worker_advanced_finetuning_ap_32g_dialog
         --extra-button \
         --extra-label 'Back' \
         --form 'AddPiece Fine Tuning' $HEIGHT $WIDTH 10 \
-        'AddPiece Base Min Memory'     1 1 "$g_apBaseMinimumMemory" 1 40 40 0 \
-        'AddPiece GPU Utilization'     2 1 "$g_apGpuUtilization" 2 40 40 0 \
-        'AddPiece Max Memory'          3 1 "$g_apMaxMemory" 3 40 40 0 \
-        'AddPiece Max Parallelism'     4 1 "$g_apMaxParallelism" 4 40 40 0 \
-        'AddPiece Max Parallelism GPU' 5 1 "$g_apMaxParallelismGpu" 5 40 40 0 \
-        'AddPiece Min Memory'          6 1 "$g_apMinimumMemory" 6 40 40 0 \
+        'Base Minimum Memory'     1 1 "$g_apBaseMinimumMemory" 1 30 15 0 \
+        'GPU Utilization'         2 1 "$g_apGpuUtilization" 2 30 15 0 \
+        'Maximum Memory'          3 1 "$g_apMaxMemory" 3 30 15 0 \
+        'Maximum Parallelism'     4 1 "$g_apMaxParallelism" 4 30 15 0 \
+        'Maximum Parallelism GPU' 5 1 "$g_apMaxParallelismGpu" 5 30 15 0 \
+        'Minimum Memory'          6 1 "$g_apMinimumMemory" 6 30 15 0 \
         3>&1 1>&2 2>&3 3>&-)
 }
 
@@ -260,12 +263,12 @@ function worker_advanced_finetuning_pc1_32g_dialog
         --extra-button \
         --extra-label 'Back' \
         --form 'PreCommit1 Fine Tuning' $HEIGHT $WIDTH 10 \
-        'PreCommit1 Base Min Memory'      1 1 "$g_pc1BaseMinimumMemory" 1 40 40 0 \
-        'PreCommit1 GPU Utilization'      2 1 "$g_pc1GpuUtilization" 2 40 40 0 \
-        'PreCommit1 Max Memory'           3 1 "$g_pc1MaxMemory" 3 40 40 0 \
-        'PreCommit1 Max Parallelism'      4 1 "$g_pc1MaxParallelism" 4 40 40 0 \
-        'PreCommit1 Max Parallelism GPU'  5 1 "$g_pc1MaxParallelismGpu" 5 40 40 0 \
-        'PreCommit1 Min Memory'           6 1 "$g_pc1MinimumMemory" 6 40 40 0 \
+        'Base Minimum Memory'      1 1 "$g_pc1BaseMinimumMemory" 1 30 15 0 \
+        'GPU Utilization'          2 1 "$g_pc1GpuUtilization" 2 30 15 0 \
+        'Maximum Memory'           3 1 "$g_pc1MaxMemory" 3 30 15 0 \
+        'Maximum Parallelism'      4 1 "$g_pc1MaxParallelism" 4 30 15 0 \
+        'Maximum Parallelism GPU'  5 1 "$g_pc1MaxParallelismGpu" 5 30 15 0 \
+        'Minimum Memory'           6 1 "$g_pc1MinimumMemory" 6 30 15 0 \
         3>&1 1>&2 2>&3 3>&-)
 }
 
@@ -279,12 +282,12 @@ function worker_advanced_finetuning_pc2_32g_dialog
         --extra-button \
         --extra-label 'Back' \
         --form 'PreCommit2 Fine Tuning' $HEIGHT $WIDTH 10 \
-        'PreCommit2 Base Min Memory'     1 1 "$g_pc1BaseMinimumMemory" 1 40 40 0 \
-        'PreCommit2 GPU Utilization'     2 1 "$g_pc1GpuUtilization" 2 40 40 0 \
-        'PreCommit2 Max Memory'          3 1 "$g_pc1MaxMemory" 3 40 40 0 \
-        'PreCommit2 Max Parallelism'     4 1 "$g_pc1MaxParallelism" 4 40 40 0 \
-        'PreCommit2 Max Parallelism GPU' 5 1 "$g_pc1MaxParallelismGpu" 5 40 40 0 \
-        'PreCommit2 Min Memory'          6 1 "$g_pc1MinimumMemory" 6 40 40 0 \
+        'Base Minimum Memory'     1 1 "$g_pc2BaseMinimumMemory" 1 30 15 0 \
+        'GPU Utilization'         2 1 "$g_pc2GpuUtilization" 2 30 15 0 \
+        'Maximum Memory'          3 1 "$g_pc2MaxMemory" 3 30 15 0 \
+        'Maximum Parallelism'     4 1 "$g_pc2MaxParallelism" 4 30 15 0 \
+        'Maximum Parallelism GPU' 5 1 "$g_pc2MaxParallelismGpu" 5 30 15 0 \
+        'Minimum Memory'          6 1 "$g_pc2MinimumMemory" 6 30 15 0 \
         3>&1 1>&2 2>&3 3>&-)
 }
 
@@ -298,12 +301,12 @@ function worker_advanced_finetuning_c1_32g_dialog
         --extra-button \
         --extra-label 'Back' \
         --form 'Commit1 Fine Tuning' $HEIGHT $WIDTH 10 \
-        'Commit1 Base Min Memory'     1 1 "$g_c1BaseMinimumMemory" 1 40 40 0 \
-        'Commit1 GPU Utilization'     2 1 "$g_c1GpuUtilization" 2 40 40 0 \
-        'Commit1 Max Memory'          3 1 "$g_c1MaxMemory" 3 40 40 0 \
-        'Commit1 Max Parallelism'     4 1 "$g_c1MaxParallelism" 4 40 40 0 \
-        'Commit1 Max Parallelism GPU' 5 1 "$g_c1MaxParallelismGpu" 5 40 40 0 \
-        'Commit1 Min Memory'          6 1 "$g_c1MinimumMemory" 6 40 40 0 \
+        'Base Minimum Memory'     1 1 "$g_c1BaseMinimumMemory" 1 30 15 0 \
+        'GPU Utilization'         2 1 "$g_c1GpuUtilization" 2 30 15 0 \
+        'Maximum Memory'          3 1 "$g_c1MaxMemory" 3 30 15 0 \
+        'Maximum Parallelism'     4 1 "$g_c1MaxParallelism" 4 30 15 0 \
+        'Maximum Parallelism GPU' 5 1 "$g_c1MaxParallelismGpu" 5 30 15 0 \
+        'Minimum Memory'          6 1 "$g_c1MinimumMemory" 6 30 15 0 \
         3>&1 1>&2 2>&3 3>&-)
 }
 
@@ -317,12 +320,12 @@ function worker_advanced_finetuning_c2_32g_dialog
         --extra-button \
         --extra-label 'Back' \
         --form 'Commit2 Fine Tuning' $HEIGHT $WIDTH 10 \
-        'Commit2 Base Min Memory'     1 1 "$g_c2BaseMinimumMemory" 1 40 40 0 \
-        'Commit2 GPU Utilization'     2 1 "$g_c2GpuUtilization" 2 40 40 0 \
-        'Commit2 Max Memory'          3 1 "$g_c2MaxMemory" 3 40 40 0 \
-        'Commit2 Max Parallelism'     4 1 "$g_c2MaxParallelism" 4 40 40 0 \
-        'Commit2 Max Parallelism GPU' 5 1 "$g_c2MaxParallelismGpu" 5 40 40 0 \
-        'Commit2 Min Memory'          6 1 "$g_c2MinimumMemory" 6 40 40 0 \
+        'Base Minimum Memory'     1 1 "$g_c2BaseMinimumMemory" 1 30 15 0 \
+        'GPU Utilization'         2 1 "$g_c2GpuUtilization" 2 30 15 0 \
+        'Maximum Memory'          3 1 "$g_c2MaxMemory" 3 30 15 0 \
+        'Maximum Parallelism'     4 1 "$g_c2MaxParallelism" 4 30 15 0 \
+        'Maximum Parallelism GPU' 5 1 "$g_c2MaxParallelismGpu" 5 30 15 0 \
+        'Minimum Memory'          6 1 "$g_c2MinimumMemory" 6 30 15 0 \
         3>&1 1>&2 2>&3 3>&-)
 }
 
@@ -336,12 +339,12 @@ function worker_advanced_finetuning_uns_32g_dialog
         --extra-button \
         --extra-label 'Back' \
         --form 'Unseal Fine Tuning' $HEIGHT $WIDTH 10 \
-        'Unseal Base Min Memory'     1 1 "$g_unsBaseMinimumMemory" 1 40 40 0 \
-        'Unseal GPU Utilization'     2 1 "$g_unsGpuUtilization" 2 40 40 0 \
-        'Unseal Max Memory'          3 1 "$g_unsMaxMemory" 3 40 40 0 \
-        'Unseal Max Parallelism'     4 1 "$g_unsMaxParallelism" 4 40 40 0 \
-        'Unseal Max Parallelism GPU' 5 1 "$g_unsMaxParallelismGpu" 5 40 40 0 \
-        'Unseal Min Memory'          6 1 "$g_unsMinimumMemory" 6 40 40 0 \
+        'Base Minimum Memory'     1 1 "$g_unsBaseMinimumMemory" 1 30 15 0 \
+        'GPU Utilization'         2 1 "$g_unsGpuUtilization" 2 30 15 0 \
+        'Maximum Memory'          3 1 "$g_unsMaxMemory" 3 30 15 0 \
+        'Maximum Parallelism'     4 1 "$g_unsMaxParallelism" 4 30 15 0 \
+        'Maximum Parallelism GPU' 5 1 "$g_unsMaxParallelismGpu" 5 30 15 0 \
+        'Minimum Memory'          6 1 "$g_unsMinimumMemory" 6 30 15 0 \
         3>&1 1>&2 2>&3 3>&-)
 }
 
@@ -355,12 +358,12 @@ function worker_advanced_finetuning_get_32g_dialog
         --extra-button \
         --extra-label 'Back' \
         --form 'Get Fine Tuning' $HEIGHT $WIDTH 10 \
-        'Get Base Min Memory'     1 1 "$g_getBaseMinimumMemory" 1 40 40 0 \
-        'Get GPU Utilization'     2 1 "$g_getGpuUtilization" 2 40 40 0 \
-        'Get Max Memory'          3 1 "$g_getMaxMemory" 3 40 40 0 \
-        'Get Max Parallelism'     4 1 "$g_getMaxParallelism" 4 40 40 0 \
-        'Get Max Parallelism GPU' 5 1 "$g_getMaxParallelismGpu" 5 40 40 0 \
-        'Get Min Memory'          6 1 "$g_getMinimumMemory" 6 40 40 0 \
+        'Base Minimum Memory'     1 1 "$g_getBaseMinimumMemory" 1 30 15 0 \
+        'GPU Utilization'         2 1 "$g_getGpuUtilization" 2 30 15 0 \
+        'Maximum Memory'          3 1 "$g_getMaxMemory" 3 30 15 0 \
+        'Maximum Parallelism'     4 1 "$g_getMaxParallelism" 4 30 15 0 \
+        'Maximum Parallelism GPU' 5 1 "$g_getMaxParallelismGpu" 5 30 15 0 \
+        'Minimum Memory'          6 1 "$g_getMinimumMemory" 6 30 15 0 \
         3>&1 1>&2 2>&3 3>&-)
 }
 
@@ -392,7 +395,7 @@ function worker_tasks_dialog
         AP  'AddPiece'               $(is_task_of AP) \
         PC1 'PreCommit1'             $(is_task_of PC1) \
         PC2 'PreCommit2'             $(is_task_of PC2) \
-        _C2 'Commit'                 $(is_task_of _C2) \
+        C2  'Commit'                 $(is_task_of C2) \
         UNS 'Unseal'                 $(is_task_of UNS) \
         RU  'Replica Update'         $(is_task_of RU) \
         PR2 'Prove Replica Update 2' $(is_task_of PR2) \
@@ -623,6 +626,89 @@ function worker_advanced_finetuning_all_32g_defaults
     worker_advanced_finetuning_get_32g_defaults
 }
 
+function worker_advanced_first
+{
+    local state=$E_CREATE_ADVANCED_QUIT
+
+    IFS=' '
+    read -a strarr <<< "$g_tasks"
+
+    local current=$([ "${strarr[0]}" ] && echo "${strarr[0]}")
+    eval "state=\${E_CREATE_ADVANCED_FINETUNING_$current}"
+    if [ -z "${state}" ]; then
+        state=$E_CREATE_ADVANCED_FLAGS
+    fi
+
+    return $state
+}
+
+function worker_advanced_last
+{
+    local state=$E_CREATE_ADVANCED_QUIT
+
+    IFS=' '
+    read -a strarr <<< "$g_tasks"
+
+    local current=$([ "${strarr[-1]}" ] && echo "${strarr[-1]}")
+    eval "state=\${E_CREATE_ADVANCED_FINETUNING_$current}"
+    if [ -z "${state}" ]; then
+        state=$E_CREATE_ADVANCED_PARAMETERS
+    fi
+
+    return $state
+}
+
+function worker_advanced_next
+{
+    local current=${@:1}
+    local state=$E_CREATE_ADVANCED_QUIT
+
+    IFS=' '
+    read -a strarr <<< "$g_tasks"
+
+    for i in "${!strarr[@]}"; do
+        if [[ "${strarr[$i]}" = "${current}" ]]; then
+            ((i++)); current=$([ "${strarr[$i]}" ] && echo "${strarr[$i]}")
+            break
+        fi
+    done
+
+    eval "state=\${E_CREATE_ADVANCED_FINETUNING_$current}"
+    if [ -z "${state}" ]; then
+        state=$E_CREATE_ADVANCED_FLAGS
+    fi
+    
+    return $state
+}
+
+function worker_advanced_prev
+{
+    local current=${@:1}
+    local state=$E_CREATE_ADVANCED_QUIT
+
+    IFS=' '
+    read -a strarr <<< "$g_tasks"
+
+    for i in "${!strarr[@]}"; do
+        if [[ "${strarr[$i]}" = "${current}" ]]; then
+            ((i--)); 
+            if [[ "$i" -lt 0 ]]; then
+                current=""
+            else
+                current=$([ "${strarr[$i]}" ] && echo "${strarr[$i]}")
+            fi
+            break
+        fi
+    done
+
+    eval "state=\${E_CREATE_ADVANCED_FINETUNING_$current}"
+    if [ -z "${state}" ]; then
+        state=$E_CREATE_ADVANCED_PARAMETERS
+    fi
+    
+    return $state
+}
+
 function create_worker_type
 {
     local state=$E_CREATE_QUIT
@@ -650,10 +736,12 @@ function create_worker_advanced_finetuning_ap_32
 
     case $? in
         $DIALOG_NEXT )
-            state=$E_CREATE_ADVANCED_FINETUNING_PRECOMMIT1
+            worker_advanced_next AP
+            state=$?
             ;;
         $DIALOG_BACK )
-            state=$E_CREATE_ADVANCED_PARAMETERS
+            worker_advanced_prev AP
+            state=$?
             ;;
     esac
 
@@ -668,10 +756,12 @@ function create_worker_advanced_finetuning_pc1_32g
 
     case $? in
         $DIALOG_NEXT )
-            state=$E_CREATE_ADVANCED_FINETUNING_PRECOMMIT2
+            worker_advanced_next PC1
+            state=$?
             ;;
         $DIALOG_BACK )
-            state=$E_CREATE_ADVANCED_FINETUNING_ADDPIECE
+            worker_advanced_prev PC1
+            state=$?
             ;;
     esac
 
@@ -686,10 +776,12 @@ function create_worker_advanced_finetuning_pc2_32g
 
     case $? in
         $DIALOG_NEXT )
-            state=$E_CREATE_ADVANCED_FINETUNING_COMMIT1
+            worker_advanced_next PC2
+            state=$?
             ;;
         $DIALOG_BACK )
-            state=$E_CREATE_ADVANCED_FINETUNING_PRECOMMIT1
+            worker_advanced_prev PC2
+            state=$?
             ;;
     esac
 
@@ -704,10 +796,12 @@ function create_worker_advanced_finetuning_c1_32g
 
     case $? in
         $DIALOG_NEXT )
-            state=$E_CREATE_ADVANCED_FINETUNING_COMMIT2
+            worker_advanced_next C1
+            state=$?
             ;;
         $DIALOG_BACK )
-            state=$E_CREATE_ADVANCED_FINETUNING_PRECOMMIT2
+            worker_advanced_prev C1
+            state=$?
             ;;
     esac
 
@@ -722,10 +816,12 @@ function create_worker_advanced_finetuning_c2_32g
 
     case $? in
         $DIALOG_NEXT )
-            state=$E_CREATE_ADVANCED_FINETUNING_UNSEAL
+            worker_advanced_next C2
+            state=$?
             ;;
         $DIALOG_BACK )
-            state=$E_CREATE_ADVANCED_FINETUNING_COMMIT1
+            worker_advanced_prev C2
+            state=$?
             ;;
     esac
 
@@ -740,10 +836,12 @@ function create_worker_advanced_finetuning_uns_32g
 
     case $? in
         $DIALOG_NEXT )
-            state=$E_CREATE_ADVANCED_FINETUNING_GET
+            worker_advanced_next UNS
+            state=$?
             ;;
         $DIALOG_BACK )
-            state=$E_CREATE_ADVANCED_FINETUNING_COMMIT2
+            worker_advanced_prev UNS
+            state=$?
             ;;
     esac
 
@@ -758,15 +856,32 @@ function create_worker_advanced_finetuning_get_32g
 
     case $? in
         $DIALOG_NEXT )
-            state=$E_CREATE_ADVANCED_FLAGS
+            worker_advanced_next GET
+            state=$?
             ;;
         $DIALOG_BACK )
-            state=$E_CREATE_ADVANCED_FINETUNING_UNSEAL
+            worker_advanced_prev GET
+            state=$?
             ;;
     esac
 
     worker_advanced_finetuning_get_32g_postprocessing
     return $state
+}
+
+function create_worker_advanced_finetuning_gsk_32g
+{
+    
+}
+
+function create_worker_advanced_finetuning_pr2_32g
+{
+
+}
+
+function create_worker_advanced_finetuning_ru_32g
+{
+
 }
 
 function create_worker_tasks
@@ -783,41 +898,9 @@ function create_worker_tasks
             ;;
     esac
 
+    g_tasks="C1 GET $g_tasks"
+
     return $state
-}
-
-function worker_advanced_next
-{
-    local current=${@:1}
-    local state=$E_CREATE_ADVANCED_QUIT
-
-    IFS=' '
-    read -a strarr <<< "$g_tasks"
-
-    for i in "${!strarr[@]}"; do
-        if [[ "${strarr[$i]}" = "${current}" ]]; then
-            ((i++)); current=$([ "${strarr[$i]}" ] && echo "${strarr[$i]}" || echo 'FLG')
-            break
-        fi
-    done
-
-    case $current in
-        ("AP")  state=$E_CREATE_ADVANCED_FINETUNING_ADDPIECE ;;
-        ("PC1") state=$E_CREATE_ADVANCED_FINETUNING_PRECOMMIT1 ;;
-        ("PC2") state=$E_CREATE_ADVANCED_FINETUNING_PRECOMMIT2 ;;
-        ("C1")  state=$E_CREATE_ADVANCED_FINETUNING_COMMIT1 ;;
-        ("_C2") state=$E_CREATE_ADVANCED_FINETUNING_COMMIT2 ;;
-        ("UNS") state=$E_CREATE_ADVANCED_FINETUNING_UNSEAL ;;
-        ("GET") state=$E_CREATE_ADVANCED_FINETUNING_GET ;;
-        ("FLG") state=$E_CREATE_ADVANCED_FLAGS ;;
-    esac
-    
-    return $state
-}
-
-function worker_advanced_prev
-{
-
 }
 
 function worker_advanced_finetuning_ap_32g_exports
@@ -919,7 +1002,7 @@ function create_worker_summary_finish
         g_exports+="export LOTUS_CUSTOM_ADDPIECE=$(is_task_tf AP)\n"
         g_exports+="export LOTUS_CUSTOM_PRECOMMIT1=$(is_task_tf PC1)\n"
         g_exports+="export LOTUS_CUSTOM_PRECOMMIT2=$(is_task_tf PC2)\n"
-        g_exports+="export LOTUS_CUSTOM_COMMIT=$(is_task_tf _C2)\n"
+        g_exports+="export LOTUS_CUSTOM_COMMIT=$(is_task_tf C2)\n"
         g_exports+="export LOTUS_CUSTOM_UNSEAL=$(is_task_tf UNS)\n"
         g_exports+="export LOTUS_CUSTOM_REPLICA_UPDATE=$(is_task_tf RU)\n"
         g_exports+="export LOTUS_CUSTOM_PROVE_REPLICA_UPDATE2=$(is_task_tf PR2)\n"
@@ -985,7 +1068,8 @@ function create_worker_advanced_parameters
 
     case $? in
         $DIALOG_NEXT )
-            state=$E_CREATE_ADVANCED_FINETUNING_ADDPIECE
+            worker_advanced_first
+            state=$?
             ;;
     esac
 
@@ -1009,7 +1093,8 @@ function create_worker_advanced_flags
 
     case $? in
         $DIALOG_BACK )
-            state=$E_CREATE_ADVANCED_FINETUNING_GET
+            worker_advanced_last
+            state=$?
             ;;
     esac
 
@@ -1024,22 +1109,22 @@ function create_worker_advanced
             $E_CREATE_ADVANCED_PARAMETERS ) 
                 create_worker_advanced_parameters 
                 ;;
-            $E_CREATE_ADVANCED_FINETUNING_ADDPIECE ) 
+            $E_CREATE_ADVANCED_FINETUNING_AP ) 
                 create_worker_advanced_finetuning_ap_32 
                 ;;
-            $E_CREATE_ADVANCED_FINETUNING_PRECOMMIT1 ) 
+            $E_CREATE_ADVANCED_FINETUNING_PC1 ) 
                 create_worker_advanced_finetuning_pc1_32g 
                 ;;
-            $E_CREATE_ADVANCED_FINETUNING_PRECOMMIT2 ) 
+            $E_CREATE_ADVANCED_FINETUNING_PC2 ) 
                 create_worker_advanced_finetuning_pc2_32g 
                 ;;
-            $E_CREATE_ADVANCED_FINETUNING_COMMIT1 ) 
+            $E_CREATE_ADVANCED_FINETUNING_C1 ) 
                 create_worker_advanced_finetuning_c1_32g 
                 ;;
-            $E_CREATE_ADVANCED_FINETUNING_COMMIT2 ) 
+            $E_CREATE_ADVANCED_FINETUNING_C2 ) 
                 create_worker_advanced_finetuning_c2_32g 
                 ;;
-            $E_CREATE_ADVANCED_FINETUNING_UNSEAL ) 
+            $E_CREATE_ADVANCED_FINETUNING_UNS ) 
                 create_worker_advanced_finetuning_uns_32g 
                 ;;
             $E_CREATE_ADVANCED_FINETUNING_GET ) 
