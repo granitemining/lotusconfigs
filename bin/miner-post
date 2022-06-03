@@ -1,0 +1,69 @@
+#!/usr/bin/env bash
+
+dir="${BASH_SOURCE%/*}"
+if [[ ! -d "$dir" ]]; then dir="$PWD"; fi
+. "$dir/check-dependencies"
+
+check_dependencies lotus-miner
+
+declare g_summary
+declare -a g_dirs=(
+    "/fil" 
+    "/fil/sectors" 
+    "/fil/sealing"
+    "/fil/sealing/params"
+    "/fil/sealing/parents"
+    "/fil/common"
+    "/fil/common/nvidia"
+    "/fil/common/repos"
+    "/fil/common/params"
+)
+
+declare -a g_dirs_calibnet=(
+    "/fil/sectors/calibnet"
+    "/fil/sealing/calibnet"
+    "/fil/sealing/calibnet/params"
+    "/fil/sealing/calibnet/parents"
+)
+
+declare -a g_dirs_mountpoints=(
+    "/fil/sectors" 
+    "/fil/sealing"
+    "/fil/common"
+)
+
+for i in "${g_dirs[@]}"
+do
+    if [ ! -d "$i" ]; then
+        g_summary+="$i does not exist.\n"
+    fi
+done
+
+for i in "${g_dirs_mountpoints[@]}"
+do
+    if ! $(mountpoint $i); then
+        g_summary+="$i is not mounted.\n"
+    fi
+done
+
+# Check zpool status
+status=$(zpool get -H health fil | awk '{print $3}')
+if [ "$status" != ONLINE ]; then
+    g_summary+="fil zpool not online.\n"
+fi
+
+# Check if user belongs to required groups
+groups=$(id -nG "$USER")
+if echo $groups | grep -qw render; then
+    g_summary+="$USER is not a member of render.\n"
+fi
+
+if echo $groups | grep -qw sudo; then
+    g_summary+="$USER is not a member of sudo.\n"
+fi
+
+if [ -z "$g_summary" ]; then
+    g_summary="Everything is in order.\n"
+fi
+
+cat $g_summary
