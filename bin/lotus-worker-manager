@@ -24,10 +24,25 @@ readonly HEIGHT=0
 readonly WIDTH=0
 
 for i in \
-    E_CREATE_GENERALPARAMS E_CREATE_TYPE E_CREATE_TASKS E_CREATE_SUMMARY E_CREATE_ADVANCED E_CREATE_QUIT \
-    E_CREATE_ADVANCED_PARAMETERS E_CREATE_ADVANCED_FLAGS E_CREATE_ADVANCED_QUIT \
-    E_CREATE_ADVANCED_FINETUNING_AP E_CREATE_ADVANCED_FINETUNING_PC1 E_CREATE_ADVANCED_FINETUNING_PC2 \
-    E_CREATE_ADVANCED_FINETUNING_C1 E_CREATE_ADVANCED_FINETUNING_C2 E_CREATE_ADVANCED_FINETUNING_UNS E_CREATE_ADVANCED_FINETUNING_GET; do \
+    E_CREATE_GENERALPARAMS \
+    E_CREATE_TYPE \
+    E_CREATE_TASKS \
+    E_CREATE_SUMMARY \
+    E_CREATE_ADVANCED \
+    E_CREATE_QUIT \
+    E_CREATE_ADVANCED_PARAMETERS \
+    E_CREATE_ADVANCED_FLAGS \
+    E_CREATE_ADVANCED_QUIT \
+    E_CREATE_ADVANCED_FINETUNING_AP \
+    E_CREATE_ADVANCED_FINETUNING_PC1 \
+    E_CREATE_ADVANCED_FINETUNING_PC2 \
+    E_CREATE_ADVANCED_FINETUNING_C1 \
+    E_CREATE_ADVANCED_FINETUNING_C2 \
+    E_CREATE_ADVANCED_FINETUNING_UNS \
+    E_CREATE_ADVANCED_FINETUNING_GET \
+    E_CREATE_ADVANCED_FINETUNING_GSK \
+    E_CREATE_ADVANCED_FINETUNING_RU \
+    E_CREATE_ADVANCED_FINETUNING_PR2; do \
     readonly ${i}=$((x++)); done
 
 declare g_name
@@ -44,13 +59,16 @@ declare g_advancedParams
 declare g_bellmanCustomGpu
 
 # Finetuning 32G sectors
-declare g_advancedFinetuningAddPiece
-declare g_advancedFinetuningPreCommit1
-declare g_advancedFinetuningPreCommit2
-declare g_advancedFineTuningCommit1
-declare g_advancedFinetuningCommit2
-declare g_advancedFinetuningUnseal
-declare g_advancedFinetuningGet
+declare g_advancedFinetuningAddPiece                # AP
+declare g_advancedFinetuningPreCommit1              # PC1
+declare g_advancedFinetuningPreCommit2              # PC2
+declare g_advancedFineTuningCommit1                 # C1
+declare g_advancedFinetuningCommit2                 # C2
+declare g_advancedFinetuningUnseal                  # UNS
+declare g_advancedFinetuningGet                     # GET
+declare g_advancedFinetuningRegenSectorKey          # GSK
+declare g_advancedFinetuningReplicaUpdate           # RU
+declare g_advancedFinetuningProveReplicaUpdate2     # PR2
 
 # AddPiece 32G sectors
 declare g_apBaseMinimumMemory
@@ -243,7 +261,7 @@ function worker_advanced_finetuning_ap_32g_dialog
         --no-cancel \
         --extra-button \
         --extra-label 'Back' \
-        --form 'AddPiece Fine Tuning' $HEIGHT $WIDTH 10 \
+        --form 'AddPiece Finetuning' $HEIGHT $WIDTH 10 \
         'Base Minimum Memory'     1 1 "$g_apBaseMinimumMemory" 1 30 15 0 \
         'GPU Utilization'         2 1 "$g_apGpuUtilization" 2 30 15 0 \
         'Maximum Memory'          3 1 "$g_apMaxMemory" 3 30 15 0 \
@@ -262,7 +280,7 @@ function worker_advanced_finetuning_pc1_32g_dialog
         --no-cancel \
         --extra-button \
         --extra-label 'Back' \
-        --form 'PreCommit1 Fine Tuning' $HEIGHT $WIDTH 10 \
+        --form 'PreCommit1 Finetuning' $HEIGHT $WIDTH 10 \
         'Base Minimum Memory'      1 1 "$g_pc1BaseMinimumMemory" 1 30 15 0 \
         'GPU Utilization'          2 1 "$g_pc1GpuUtilization" 2 30 15 0 \
         'Maximum Memory'           3 1 "$g_pc1MaxMemory" 3 30 15 0 \
@@ -281,7 +299,7 @@ function worker_advanced_finetuning_pc2_32g_dialog
         --no-cancel \
         --extra-button \
         --extra-label 'Back' \
-        --form 'PreCommit2 Fine Tuning' $HEIGHT $WIDTH 10 \
+        --form 'PreCommit2 Finetuning' $HEIGHT $WIDTH 10 \
         'Base Minimum Memory'     1 1 "$g_pc2BaseMinimumMemory" 1 30 15 0 \
         'GPU Utilization'         2 1 "$g_pc2GpuUtilization" 2 30 15 0 \
         'Maximum Memory'          3 1 "$g_pc2MaxMemory" 3 30 15 0 \
@@ -300,7 +318,7 @@ function worker_advanced_finetuning_c1_32g_dialog
         --no-cancel \
         --extra-button \
         --extra-label 'Back' \
-        --form 'Commit1 Fine Tuning' $HEIGHT $WIDTH 10 \
+        --form 'Commit1 Finetuning' $HEIGHT $WIDTH 10 \
         'Base Minimum Memory'     1 1 "$g_c1BaseMinimumMemory" 1 30 15 0 \
         'GPU Utilization'         2 1 "$g_c1GpuUtilization" 2 30 15 0 \
         'Maximum Memory'          3 1 "$g_c1MaxMemory" 3 30 15 0 \
@@ -319,7 +337,7 @@ function worker_advanced_finetuning_c2_32g_dialog
         --no-cancel \
         --extra-button \
         --extra-label 'Back' \
-        --form 'Commit2 Fine Tuning' $HEIGHT $WIDTH 10 \
+        --form 'Commit2 Finetuning' $HEIGHT $WIDTH 10 \
         'Base Minimum Memory'     1 1 "$g_c2BaseMinimumMemory" 1 30 15 0 \
         'GPU Utilization'         2 1 "$g_c2GpuUtilization" 2 30 15 0 \
         'Maximum Memory'          3 1 "$g_c2MaxMemory" 3 30 15 0 \
@@ -338,7 +356,7 @@ function worker_advanced_finetuning_uns_32g_dialog
         --no-cancel \
         --extra-button \
         --extra-label 'Back' \
-        --form 'Unseal Fine Tuning' $HEIGHT $WIDTH 10 \
+        --form 'Unseal Finetuning' $HEIGHT $WIDTH 10 \
         'Base Minimum Memory'     1 1 "$g_unsBaseMinimumMemory" 1 30 15 0 \
         'GPU Utilization'         2 1 "$g_unsGpuUtilization" 2 30 15 0 \
         'Maximum Memory'          3 1 "$g_unsMaxMemory" 3 30 15 0 \
@@ -357,13 +375,52 @@ function worker_advanced_finetuning_get_32g_dialog
         --no-cancel \
         --extra-button \
         --extra-label 'Back' \
-        --form 'Get Fine Tuning' $HEIGHT $WIDTH 10 \
+        --form 'Get Finetuning' $HEIGHT $WIDTH 10 \
         'Base Minimum Memory'     1 1 "$g_getBaseMinimumMemory" 1 30 15 0 \
         'GPU Utilization'         2 1 "$g_getGpuUtilization" 2 30 15 0 \
         'Maximum Memory'          3 1 "$g_getMaxMemory" 3 30 15 0 \
         'Maximum Parallelism'     4 1 "$g_getMaxParallelism" 4 30 15 0 \
         'Maximum Parallelism GPU' 5 1 "$g_getMaxParallelismGpu" 5 30 15 0 \
         'Minimum Memory'          6 1 "$g_getMinimumMemory" 6 30 15 0 \
+        3>&1 1>&2 2>&3 3>&-)
+}
+
+function worker_advanced_finetuning_gsk_32g_dialog
+{
+    g_advancedFinetuningRegenSectorKey=$(dialog \
+        --title 'Create Worker' \
+        --backtitle 'Lotus Worker Manager' \
+        --ok-label 'Next' \
+        --no-cancel \
+        --extra-button \
+        --extra-label 'Back' \
+        --form 'Regen Sector Key Finetuning' $HEIGHT $WIDTH 10 \
+        3>&1 1>&2 2>&3 3>&-)
+}
+
+function worker_advanced_finetuning_ru_32g_dialog
+{
+    g_advancedFinetuningReplicaUpdate=$(dialog \
+        --title 'Create Worker' \
+        --backtitle 'Lotus Worker Manager' \
+        --ok-label 'Next' \
+        --no-cancel \
+        --extra-button \
+        --extra-label 'Back' \
+        --form 'Replica Update Finetuning' $HEIGHT $WIDTH 10 \
+        3>&1 1>&2 2>&3 3>&-)
+}
+
+function worker_advanced_finetuning_pr2_32g_dialog
+{
+    g_advancedFinetuningProveReplicaUpdate2=$(dialog \
+        --title 'Create Worker' \
+        --backtitle 'Lotus Worker Manager' \
+        --ok-label 'Next' \
+        --no-cancel \
+        --extra-button \
+        --extra-label 'Back' \
+        --form 'Prove Replica Update 2 Finetuning' $HEIGHT $WIDTH 10 \
         3>&1 1>&2 2>&3 3>&-)
 }
 
@@ -542,6 +599,27 @@ function worker_advanced_finetuning_get_32g_postprocessing
         g_getMaxParallelism=${strarr[3]}
         g_getMaxParallelismGpu=${strarr[4]}
         g_getMinimumMemory=${strarr[5]}
+    fi
+}
+
+function worker_advanced_finetuning_gsk_32g_postprocessing
+{
+    if [ -n "$g_advancedFinetuningRegenSectorKey" ]; then
+        readarray -t strarr <<< "$g_advancedFinetuningRegenSectorKey"
+    fi
+}
+
+function worker_advanced_finetuning_ru_32g_postprocessing
+{
+    if [ -n "$g_advancedFinetuningReplicaUpdate" ]; then
+        readarray -t strarr <<< "$g_advancedFinetuningReplicaUpdate"
+    fi
+}
+
+function worker_advanced_finetuning_pr2_32g_postprocessing
+{
+    if [ -n "$g_advancedFinetuningProveReplicaUpdate2" ]; then
+        readarray -t strarr <<< "$g_advancedFinetuningProveReplicaUpdate2"
     fi
 }
 
@@ -871,17 +949,62 @@ function create_worker_advanced_finetuning_get_32g
 
 function create_worker_advanced_finetuning_gsk_32g
 {
-    
+    local state=$E_CREATE_ADVANCED_QUIT
+    worker_advanced_finetuning_gsk_32g_dialog
+
+    case $? in
+        $DIALOG_NEXT )
+            worker_advanced_next GSK
+            state=$?
+            ;;
+        $DIALOG_BACK )
+            worker_advanced_prev GSK
+            state=$?
+            ;;
+    esac
+
+    worker_advanced_finetuning_gsk_32g_postprocessing
+    return $state
 }
 
 function create_worker_advanced_finetuning_pr2_32g
 {
+    local state=$E_CREATE_ADVANCED_QUIT
+    worker_advanced_finetuning_pr2_32g_dialog
 
+    case $? in
+        $DIALOG_NEXT )
+            worker_advanced_next PR2
+            state=$?
+            ;;
+        $DIALOG_BACK )
+            worker_advanced_prev PR2
+            state=$?
+            ;;
+    esac
+
+    worker_advanced_finetuning_pr2_32g_postprocessing
+    return $state
 }
 
 function create_worker_advanced_finetuning_ru_32g
 {
+    local state=$E_CREATE_ADVANCED_QUIT
+    worker_advanced_finetuning_ru_32g_dialog
 
+    case $? in
+        $DIALOG_NEXT )
+            worker_advanced_next RU
+            state=$?
+            ;;
+        $DIALOG_BACK )
+            worker_advanced_prev RU
+            state=$?
+            ;;
+    esac
+
+    worker_advanced_finetuning_ru_32g_postprocessing
+    return $state
 }
 
 function create_worker_tasks
@@ -1129,6 +1252,15 @@ function create_worker_advanced
                 ;;
             $E_CREATE_ADVANCED_FINETUNING_GET ) 
                 create_worker_advanced_finetuning_get_32g 
+                ;;
+            $E_CREATE_ADVANCED_FINETUNING_GSK )
+                create_worker_advanced_finetuning_gsk_32g
+                ;;
+            $E_CREATE_ADVANCED_FINETUNING_RU )
+                create_worker_advanced_finetuning_ru_32g
+                ;;
+            $E_CREATE_ADVANCED_FINETUNING_PR2 )
+                create_worker_advanced_finetuning_pr2_32g
                 ;;
             $E_CREATE_ADVANCED_FLAGS ) 
                 create_worker_advanced_flags 
