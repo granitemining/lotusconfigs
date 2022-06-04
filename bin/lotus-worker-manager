@@ -25,7 +25,7 @@ readonly WIDTH=0
 
 for i in \
     E_CREATE_GENERALPARAMS E_CREATE_TYPE E_CREATE_TASKS E_CREATE_SUMMARY E_CREATE_ADVANCED E_CREATE_QUIT \
-    E_CREATE_ADVANCED_PARAMETERS E_CREATE_ADVANCED_FLAGS E_CREATE_ADVANCED_QUIT; do \
+    E_CREATE_ADVANCED_PARAMETERS E_CREATE_ADVANCED_CUSTOM E_CREATE_ADVANCED_FLAGS E_CREATE_ADVANCED_QUIT; do \
     readonly ${i}=$((x++)); done
 
 declare g_name
@@ -38,62 +38,85 @@ declare g_flags='SDR'
 declare g_cpuGroup='all'
 declare g_generalParams
 declare g_advancedParams
+declare g_advancedCustom
+declare g_advancedCustomTempFile
 declare g_bellmanCustomGpu
 
 function is_task_enabled
 {
     local task=${@:1}
-    if [[ "$g_tasks" =~ "$task" ]]; then
-        echo 'on'
-    else
-        echo 'off'
-    fi
-}
-
-function is_task_set
-{
-    local task=${@:1}
-    if [[ "$g_tasks" =~ "$task" ]]; then
-        echo 'true'
-    else
-        echo 'false'
-    fi
+    [[ "$g_tasks" =~ (^|[[:space:]])"$task"($|[[:space:]]) ]] \
+    && true || false
 }
 
 function is_type_enabled
 {
     local type=${@:1}
-    if [[ "$g_type" == "$type" ]]; then
+    [[ "$g_type" == "$type" ]] \
+    && true || false
+}
+
+function is_flag_enabled
+{
+    local flag=${@:1}
+    [[ "$g_flags" =~ (^|[[:space:]])"$flag"($|[[:space:]]) ]] \
+    && true || false
+}
+
+function is_task_of
+{
+    local task=${@:1}
+    if $(is_task_enabled $task); then
         echo 'on'
     else
         echo 'off'
     fi
 }
 
-function is_type_set
+function is_task_tf
 {
-    local type=${@:1}
-    if [[ "$g_type" == "$type" ]]; then
+    local task=${@:1}
+    if $(is_task_enabled $task); then
         echo 'true'
     else
         echo 'false'
     fi
 }
 
-function is_flag_enabled
+function is_type_of
 {
-    local flag=${@:1}
-    if [[ "$g_flags" =~ "$flag" ]]; then
+    local type=${@:1}
+    if $(is_type_enabled $type); then
         echo 'on'
     else
         echo 'off'
     fi
 }
 
-function is_flag_set
+function is_type_tf
+{
+    local type=${@:1}
+    if $(is_type_enabled $type); then
+        echo 'true'
+    else
+        echo 'false'
+    fi
+}
+
+function is_flag_of
 {
     local flag=${@:1}
-    if [[ "$g_flags" =~ "$flag" ]]; then
+    if $(is_flag_enabled $flag); then
+        echo 'on'
+    else
+        echo 'off'
+    fi
+}
+
+function is_flag_io
+{
+    local flag=${@:1}
+    if $(is_flag_enabled $flag); then
         echo '1'
     else
         echo '0'
@@ -126,9 +149,9 @@ function worker_type_dialog
 	    --no-tags \
 	    --no-cancel \
         --radiolist 'Select Type' $HEIGHT $WIDTH 3 \
-        Seal 'Sealer' $(is_type_enabled Seal) \
-        WdPoSt 'WindowPoSt' $(is_type_enabled WdPoSt) \
-        WinPoSt 'WinningPoSt' $(is_type_enabled WinPoSt) \
+        Seal 'Sealer' $(is_type_of Seal) \
+        WdPoSt 'WindowPoSt' $(is_type_of WdPoSt) \
+        WinPoSt 'WinningPoSt' $(is_type_of WinPoSt) \
         3>&1 1>&2 2>&3 3>&-)
 }
 
@@ -145,6 +168,19 @@ function worker_advanced_parameters_dialog
         3>&1 1>&2 2>&3 3>&-)
 }
 
+function worker_advanced_custom_dialog
+{
+    g_advancedCustom=$(dialog \
+        --title 'Create Worker' \
+        --backtitle 'Lotus Worker Manager' \
+        --ok-label 'Next' \
+        --extra-button \
+        --extra-label 'Back' \
+        --no-cancel \
+        --editbox $g_advancedCustomTempFile $HEIGHT $WIDTH \
+        3>&1 1>&2 2>&3 3>&-)
+}
+
 function worker_advanced_flags_dialog
 {
     g_flags=$(dialog \
@@ -155,7 +191,7 @@ function worker_advanced_flags_dialog
 		--no-cancel \
 		--no-tags \
 		--checklist 'Advanced Flags' $HEIGHT $WIDTH 10 \
-        SDR 'Use Multicore SDR' $(is_flag_enabled SDR) \
+        SDR 'Use Multicore SDR' $(is_flag_of SDR) \
         3>&1 1>&2 2>&3 3>&-)
 }
 
@@ -170,14 +206,14 @@ function worker_tasks_dialog
         --no-cancel \
         --no-tags \
         --checklist 'Select Tasks' $HEIGHT $WIDTH 10 \
-        AP  'AddPiece'               $(is_task_enabled AP) \
-        PC1 'PreCommit1'             $(is_task_enabled PC1) \
-        PC2 'PreCommit2'             $(is_task_enabled PC2) \
-        _C2 'Commit'                 $(is_task_enabled _C2) \
-        UNS 'Unseal'                 $(is_task_enabled UNS) \
-        RU  'Replica Update'         $(is_task_enabled RU) \
-        PR2 'Prove Replica Update 2' $(is_task_enabled PR2) \
-        GSK 'Regen Sector Key'       $(is_task_enabled GSK) \
+        AP  'AddPiece'               $(is_task_of AP) \
+        PC1 'PreCommit1'             $(is_task_of PC1) \
+        PC2 'PreCommit2'             $(is_task_of PC2) \
+        C2  'Commit'                 $(is_task_of C2) \
+        UNS 'Unseal'                 $(is_task_of UNS) \
+        RU  'Replica Update'         $(is_task_of RU) \
+        PR2 'Prove Replica Update 2' $(is_task_of PR2) \
+        GSK 'Regen Sector Key'       $(is_task_of GSK) \
         3>&1 1>&2 2>&3 3>&-)
 }
 
@@ -219,17 +255,6 @@ function create_worker_generalparams
 
     worker_generalparams_postprocessing
     return $state
-}
-
-function worker_generalparams_postprocessing
-{
-    if [ -n "$g_generalParams" ]; then
-        readarray -t strarr <<< "$g_generalParams"
-        g_name=${strarr[0]}
-        g_port=${strarr[1]}
-        g_gpus=${strarr[2]}
-        g_cpuGroup=${strarr[3]}
-    fi
 }
 
 function create_worker_type
@@ -275,39 +300,65 @@ function create_worker_summary_finish
     mkdir -p $wrepopath/tmpdir
 
     declare exports
-    exports+="export BELLMAN_CPU_UTILIZATION=$g_cpuUtilization\n"
+    
+    exports+="export LOTUS_CUSTOM_PORT=$g_port\n"
     exports+="export TMPDIR=$wrepopath/tmpdir\n"
     exports+="export CUDA_VISIBLE_DEVICES=$g_gpus\n"
     exports+="export LOTUS_WORKER_PATH=$wrepopath\n"
+    exports+="export FIL_PROOFS_USE_MULTICORE_SDR=$(is_flag_io SDR)\n"
 
     if [[ "$g_type" == "Seal" ]]; then
-        exports+="export LOTUS_CUSTOM_ADDPIECE=$(is_task_set AP)\n"
-        exports+="export LOTUS_CUSTOM_PRECOMMIT1=$(is_task_set PC1)\n"
-        exports+="export LOTUS_CUSTOM_PRECOMMIT2=$(is_task_set PC2)\n"
-        exports+="export LOTUS_CUSTOM_COMMIT=$(is_task_set _C2)\n"
-        exports+="export LOTUS_CUSTOM_UNSEAL=$(is_task_set UNS)\n"
-        exports+="export LOTUS_CUSTOM_REPLICA_UPDATE=$(is_task_set RU)\n"
-        exports+="export LOTUS_CUSTOM_PROVE_REPLICA_UPDATE2=$(is_task_set PR2)\n"
-        exports+="export LOTUS_CUSTOM_REGEN_SECTOR_KEY=$(is_task_set GSK)\n"
+        exports+="export LOTUS_CUSTOM_ADDPIECE=$(is_task_tf AP)\n"
+        exports+="export LOTUS_CUSTOM_PRECOMMIT1=$(is_task_tf PC1)\n"
+        exports+="export LOTUS_CUSTOM_PRECOMMIT2=$(is_task_tf PC2)\n"
+        exports+="export LOTUS_CUSTOM_COMMIT=$(is_task_tf C2)\n"
+        exports+="export LOTUS_CUSTOM_UNSEAL=$(is_task_tf UNS)\n"
+        exports+="export LOTUS_CUSTOM_REPLICA_UPDATE=$(is_task_tf RU)\n"
+        exports+="export LOTUS_CUSTOM_PROVE_REPLICA_UPDATE2=$(is_task_tf PR2)\n"
+        exports+="export LOTUS_CUSTOM_REGEN_SECTOR_KEY=$(is_task_tf GSK)\n"
     else
-        exports+="export LOTUS_CUSTOM_WINDOWPOST=$(is_type_set WdPoSt)\n"
-        exports+="export LOTUS_CUSTOM_WINNINGPOST=$(is_type_set WinPoSt)\n"
+        exports+="export LOTUS_CUSTOM_WINDOWPOST=$(is_type_tf WdPoSt)\n"
+        exports+="export LOTUS_CUSTOM_WINNINGPOST=$(is_type_tf WinPoSt)\n"
     fi
     
-    exports+="export LOTUS_CUSTOM_PORT=$g_port\n"
-    exports+="export LOTUS_CUSTOM_CPUGROUP=$g_cpuGroup\n"
-    exports+="export FIL_PROOFS_USE_MULTICORE_SDR=$(is_flag_set SDR)\n"
-
-    if [ ! -z "$g_bellmanCustomGpu" ]; then
-        exports+="export BELLMAN_CUSTOM_GPU='$g_bellmanCustomGpu'\n"
-    fi
+    [ -n "$g_bellmanCustomGpu" ]    && exports+="export BELLMAN_CUSTOM_GPU='$g_bellmanCustomGpu'\n"
+    [ -n "$g_cpuUtilization" ]      && exports+="export BELLMAN_CPU_UTILIZATION=$g_cpuUtilization\n"
+    [ -n "$g_cpuGroup" ]            && exports+="export LOTUS_CUSTOM_CPUGROUP=$g_cpuGroup\n"
 
     echo -e "$exports" | tee $wrepopath/$g_name.env
+    echo "$g_advancedCustom" >> $wrepopath/$g_name.env
 
     dialog --title 'Create Worker' \
            --backtitle 'Lotus Worker Manager' \
            --msgbox "Worker $g_name created!" $HEIGHT $WIDTH \
            3>&1 1>&2 2>&3 3>&-
+}
+
+function worker_advanced_parameters_postprocessing
+{
+    if [ -n "$g_advancedParams" ]; then
+        readarray -t strarr <<< "$g_advancedParams"
+        g_cpuUtilization=${strarr[0]}
+        g_bellmanCustomGpu=${strarr[1]}
+    fi
+}
+
+function worker_advanced_custom_postprocessing
+{
+    if [ -n "$g_advancedCustom" ]; then
+        echo "$g_advancedCustom" > $g_advancedCustomTempFile
+    fi
+}
+
+function worker_generalparams_postprocessing
+{
+    if [ -n "$g_generalParams" ]; then
+        readarray -t strarr <<< "$g_generalParams"
+        g_name=${strarr[0]}
+        g_port=${strarr[1]}
+        g_gpus=${strarr[2]}
+        g_cpuGroup=${strarr[3]}
+    fi
 }
 
 function create_worker_summary
@@ -340,7 +391,7 @@ function create_worker_advanced_parameters
 
     case $? in
         $DIALOG_NEXT )
-            state=$E_CREATE_ADVANCED_FLAGS
+            state=$E_CREATE_ADVANCED_CUSTOM
             ;;
     esac
 
@@ -348,13 +399,22 @@ function create_worker_advanced_parameters
     return $state
 }
 
-function worker_advanced_parameters_postprocessing
+function create_worker_advanced_custom
 {
-    if [ -n "$g_advancedParams" ]; then
-        readarray -t strarr <<< "$g_advancedParams"
-        g_cpuUtilization=${strarr[0]}
-        g_bellmanCustomGpu=${strarr[1]}
-    fi
+    local state=$E_CREATE_ADVANCED_QUIT
+    worker_advanced_custom_dialog
+
+    case $? in
+        $DIALOG_NEXT )
+            state=$E_CREATE_ADVANCED_FLAGS
+            ;;
+        $DIALOG_BACK )
+            state=$E_CREATE_ADVANCED_PARAMETERS
+            ;;
+    esac
+
+    worker_advanced_custom_postprocessing
+    return $state
 }
 
 function create_worker_advanced_flags
@@ -364,7 +424,7 @@ function create_worker_advanced_flags
 
     case $? in
         $DIALOG_BACK )
-            state=$E_CREATE_ADVANCED_PARAMETERS
+            state=$E_CREATE_ADVANCED_CUSTOM
             ;;
     esac
 
@@ -377,6 +437,7 @@ function create_worker_advanced
     while [[ $state -ne $E_CREATE_ADVANCED_QUIT ]]; do
         case $state in
             $E_CREATE_ADVANCED_PARAMETERS ) create_worker_advanced_parameters ;;
+            $E_CREATE_ADVANCED_CUSTOM ) create_worker_advanced_custom ;;
             $E_CREATE_ADVANCED_FLAGS ) create_worker_advanced_flags ;;
         esac
         state=$?
@@ -387,6 +448,9 @@ function create_worker_advanced
 
 function create_worker
 {
+    g_advancedCustomTempFile=$(mktemp /tmp/abc-XXXXX.tmp)
+    echo "# Use this file to add your own custom environment variables" > $g_advancedCustomTempFile
+
     local state=$E_CREATE_GENERALPARAMS
     while [[ $state -ne $E_CREATE_QUIT ]]; do
         case $state in
@@ -398,6 +462,8 @@ function create_worker
         esac
         state=$?
     done
+
+    rm $g_advancedCustomTempFile
 }
 
 function delete_worker_delete
