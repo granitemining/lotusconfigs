@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+for d in $HOME/.lotusworkers/*
+do
+    if [ ! -f "${d}/repo.lock" ]; then
+        # Code to handle offline worker
+    else
+        # Code to handle online worker
+    fi
+done
