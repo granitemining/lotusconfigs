@@ -66,61 +66,43 @@ function is_flag_enabled
 function is_task_of
 {
     local task=${@:1}
-    if $(is_task_enabled $task); then
-        echo 'on'
-    else
-        echo 'off'
-    fi
+    is_task_enabled $task && echo 'on' \
+    || echo 'off'
 }
 
 function is_task_tf
 {
     local task=${@:1}
-    if $(is_task_enabled $task); then
-        echo 'true'
-    else
-        echo 'false'
-    fi
+    is_task_enabled $task && echo 'true' \
+    || echo 'false'
 }
 
 function is_type_of
 {
     local type=${@:1}
-    if $(is_type_enabled $type); then
-        echo 'on'
-    else
-        echo 'off'
-    fi
+    is_type_enabled $type && echo 'on' \
+    || echo 'off'
 }
 
 function is_type_tf
 {
     local type=${@:1}
-    if $(is_type_enabled $type); then
-        echo 'true'
-    else
-        echo 'false'
-    fi
+    is_type_enabled $type && echo 'true' \
+    || echo 'false'
 }
 
 function is_flag_of
 {
     local flag=${@:1}
-    if $(is_flag_enabled $flag); then
-        echo 'on'
-    else
-        echo 'off'
-    fi
+    is_flag_enabled $flag && echo 'on' \
+    || echo 'off'
 }
 
 function is_flag_io
 {
     local flag=${@:1}
-    if $(is_flag_enabled $flag); then
-        echo '1'
-    else
-        echo '0'
-    fi
+    is_flag_enabled $flag && echo '1' \
+    || echo '0'
 }
 
 function worker_generalparams_dialog
