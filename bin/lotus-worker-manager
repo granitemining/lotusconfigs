@@ -1,4 +1,4 @@
-#!/usr/bin/bash
+#!/usr/bin/env bash
 
 readonly DIALOG_OK=0
 readonly DIALOG_YES=0

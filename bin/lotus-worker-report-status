@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 
-for d in $HOME/.lotusworkers/*
+for w in "$HOME"/.lotusworkers/*
 do
-    if [ ! -f "${d}/repo.lock" ]; then
-        # Code to handle offline worker
-    else
-        # Code to handle online worker
+    declare name=$(basename $w)
+    declare host=$(hostname)
+
+    if [ ! -f "${w}/repo.lock" ]; then
+        mail -s "$name on $host offline" -r bot@ops.sandford.pub team@ops.sandford.pub \
+            <<< "$name on $host is offline. If this worker was previously online, begin troubleshooting ASAP. End report."
     fi
 done
