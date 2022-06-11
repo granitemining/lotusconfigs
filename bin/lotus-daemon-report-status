@@ -4,6 +4,7 @@ declare daemon="$HOME/.lotus"
 declare host=$(hostname)
 
 if [ ! -f "${daemon}/repo.lock" ]; then
+    declare time=$(date +"%Y-%m-%d %T")
     mail -s "lotus daemon offline" -r bot@ops.sandford.pub team@ops.sandford.pub \
-        <<< "lotus daemon is offline. Begin troubleshooting immediately. End report."
+        <<< "$time --- lotus daemon is offline. Begin troubleshooting immediately. End report."
 fi
