@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+declare miner="$HOME/.lotusminer"
+declare host=$(hostname)
+
+if [ ! -f "${miner}/repo.lock" ]; then
+    mail -s "miner offline" -r ***REMOVED*** ***REMOVED*** \
+        <<< "miner is offline. Begin troubleshooting immediately. End report."
+fi
