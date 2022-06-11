@@ -5,7 +5,7 @@ do
     declare name=$(basename $w)
     declare host=$(hostname)
 
-    if [ ! -f "${w}/repo.lock" ]; then
+    if [ ! -f "${w}/repo.lock" ] && [ -f "${w}/storage.json" ]; then
         mail -s "$name on $host offline" -r bot@ops.sandford.pub team@ops.sandford.pub \
             <<< "$name on $host is offline. If this worker was previously online, begin troubleshooting ASAP. End report."
     fi
