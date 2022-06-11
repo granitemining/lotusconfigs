@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+declare markets="$HOME/.lotusmarkets"
+declare host=$(hostname)
+
+if [ ! -f "${markets}/repo.lock" ]; then
+    declare time=$(date +"%Y-%m-%d %T")
+    mail -s "markets node offline" -r ***REMOVED*** ***REMOVED*** \
+        <<< "$time --- markets node is offline. Begin troubleshooting immediately. End report."
+fi
