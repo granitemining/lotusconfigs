@@ -4,6 +4,7 @@ declare miner="$HOME/.lotusminer"
 declare host=$(hostname)
 
 if [ ! -f "${miner}/repo.lock" ]; then
+    declare time=$(date +"%Y-%m-%d %T")
     mail -s "miner offline" -r ***REMOVED*** ***REMOVED*** \
-        <<< "miner is offline. Begin troubleshooting immediately. End report."
+        <<< "$time --- miner is offline. Begin troubleshooting immediately. End report."
 fi
