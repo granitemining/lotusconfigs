@@ -1,0 +1,10 @@
+function check_envvars
+{
+    for var in "$@"
+    do
+        if [ -z "${var}" ]; then
+            echo "Please define $var before continuing."
+            exit
+        fi
+    done
+}

@@ -1,10 +1,17 @@
 #!/usr/bin/env bash
 
+dir="${BASH_SOURCE%/*}"
+if [[ ! -d "$dir" ]]; then dir="$PWD"; fi
+. "$dir/check-dependencies"
+. "$dir/check-envvars"
+
+check_dependencies mail
+check_envvars OPSGENIE_BOT_EMAIL OPSGENIE_TEAM_EMAIL
+
 declare miner="$HOME/.lotusminer"
-declare host=$(hostname)
 
 if [ ! -f "${miner}/repo.lock" ]; then
     declare time=$(date +"%Y-%m-%d %T")
-    mail -s "miner offline" -r bot@ops.sandford.pub team@ops.sandford.pub \
+    mail -s "miner offline" -r OPSGENIE_BOT_EMAIL OPSGENIE_TEAM_EMAIL \
         <<< "$time --- miner is offline. Begin troubleshooting immediately. End report."
 fi
