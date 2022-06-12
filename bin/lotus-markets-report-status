@@ -1,10 +1,17 @@
 #!/usr/bin/env bash
 
+dir="${BASH_SOURCE%/*}"
+if [[ ! -d "$dir" ]]; then dir="$PWD"; fi
+. "$dir/check-dependencies"
+. "$dir/check-envvars"
+
+check_dependencies mail
+check_envvars OPSGENIE_BOT_EMAIL OPSGENIE_TEAM_EMAIL
+
 declare markets="$HOME/.lotusmarkets"
-declare host=$(hostname)
 
 if [ ! -f "${markets}/repo.lock" ]; then
     declare time=$(date +"%Y-%m-%d %T")
-    mail -s "markets node offline" -r ***REMOVED*** ***REMOVED*** \
+    mail -s "markets node offline" -r OPSGENIE_BOT_EMAIL OPSGENIE_TEAM_EMAIL \
         <<< "$time --- markets node is offline. Begin troubleshooting immediately. End report."
 fi

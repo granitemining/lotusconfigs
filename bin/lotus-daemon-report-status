@@ -1,10 +1,17 @@
 #!/usr/bin/env bash
 
+dir="${BASH_SOURCE%/*}"
+if [[ ! -d "$dir" ]]; then dir="$PWD"; fi
+. "$dir/check-dependencies"
+. "$dir/check-envvars"
+
+check_dependencies mail
+check_envvars OPSGENIE_BOT_EMAIL OPSGENIE_TEAM_EMAIL
+
 declare daemon="$HOME/.lotus"
-declare host=$(hostname)
 
 if [ ! -f "${daemon}/repo.lock" ]; then
     declare time=$(date +"%Y-%m-%d %T")
-    mail -s "lotus daemon offline" -r ***REMOVED*** ***REMOVED*** \
+    mail -s "lotus daemon offline" -r OPSGENIE_BOT_EMAIL OPSGENIE_TEAM_EMAIL \
         <<< "$time --- lotus daemon is offline. Begin troubleshooting immediately. End report."
 fi
