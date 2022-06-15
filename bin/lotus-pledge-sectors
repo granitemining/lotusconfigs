@@ -1,15 +1,5 @@
 #!/usr/bin/env bash
-
-## Courtesy of Patrick - Factor8 Solutions
-## DO NOT USE ON MAINNET!!
-## Modifications by me :)
-
-dir="${BASH_SOURCE%/*}"
-if [[ ! -d "$dir" ]]; then dir="$PWD"; fi
-. "$dir/check-dependencies"
-
-check_dependencies lotus-miner
-
+#
 # Metrics at a glance
 # 2700 seconds = 45 minutes    (~1TiB/day)
 # 1350 seconds = 22.5 minutes  (~2TiB/day)
@@ -21,23 +11,23 @@ check_dependencies lotus-miner
 # 338 seconds  = 5.6 minutes   (~8TiB/day)
 # 300 seconds  = 5 minutes     (~9TiB/day)
 # 270 seconds  = 4.5 minutes  (~10TiB/day)
-LOOP_SLEEP_TIME=540
 
-INITIAL_SLEEP_TIME=0
-PLEDGE_COUNTER=0
-WITHDRAWL_INTERVAL=10
+dir="${BASH_SOURCE%/*}"
+if [[ ! -d "$dir" ]]; then dir="$PWD"; fi
+. "$dir/check-dependencies"
 
-sleep $INITIAL_SLEEP_TIME
+check_dependencies lotus-miner
 
-while [ $PLEDGE_COUNTER -le 320 ]
+pledgeCounter=0
+loopSleepTime=${LOOP_SLEEP_TIME:=2700}
+initialSleepTime=${INITIAL_SLEEP_TIME:=0}
+maximumPledges=${MAXIMUM_PLEDGES:=320}
+
+sleep $initialSleepTime
+
+while [ $pledgeCounter -le $maximumPledges ]
 do
     lotus-miner sectors pledge
-    let PLEDGE_COUNTER++
-    if ! (( $PLEDGE_COUNTER % $WITHDRAWL_INTERVAL )) ; then
-        lotus-miner actor withdraw &
-    fi
-    sleep $LOOP_SLEEP_TIME
+    let pledgeCounter++
+    sleep $loopSleepTime
 done
-exit 0
-
-## DO NOT USE ON MAINNET!!
