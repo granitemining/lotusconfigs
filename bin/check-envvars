@@ -1,10 +1,18 @@
 function check_envvars
 {
+    declare pass=true
+    
     for var in "$@"
     do
-        if [ -z "${var}" ]; then
-            echo "Please define $var before continuing."
-            exit
+        eval envvar='$'$var
+        if [ -z "${envvar}" ]; then
+            echo "$var undefined"
+            [ "$pass" = true ] && pass=false
         fi
     done
+
+    if [ "$pass" = false ]; then
+        echo "Please define these environment variables before continuing."
+        exit 1
+    fi
 }

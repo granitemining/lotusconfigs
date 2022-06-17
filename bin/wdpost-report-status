@@ -9,8 +9,8 @@ check_dependencies mail lotus-miner
 check_envvars OPSGENIE_BOT_EMAIL OPSGENIE_TEAM_EMAIL
 
 date=$(date +"%Y-%m-%d")
-timestamp=$(date +"%Y-%m-%d %T")
 wdpost="$(lotus-miner proving faults)"
 
 mail -s "WindowPoSt $date" -r $OPSGENIE_BOT_EMAIL $OPSGENIE_TEAM_EMAIL \
-    <<< "$time --- $wdpost"
+    <<< "$wdpost"
+    
