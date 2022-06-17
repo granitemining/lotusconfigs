@@ -13,3 +13,4 @@ wdpost="$(lotus-miner proving faults)"
 
 mail -s "WindowPoSt $date" -r $OPSGENIE_BOT_EMAIL $OPSGENIE_TEAM_EMAIL \
     <<< "$wdpost"
+    
