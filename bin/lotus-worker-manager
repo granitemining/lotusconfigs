@@ -1,11 +1,5 @@
 #!/usr/bin/env bash
 
-dir="${BASH_SOURCE%/*}"
-if [[ ! -d "$dir" ]]; then dir="$PWD"; fi
-. "$dir/check-dependencies"
-
-check_dependencies dialog
-
 readonly DIALOG_OK=0
 readonly DIALOG_YES=0
 readonly DIALOG_NEXT=0

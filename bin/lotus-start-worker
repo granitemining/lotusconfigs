@@ -1,11 +1,5 @@
 #!/usr/bin/env bash
 
-dir="${BASH_SOURCE%/*}"
-if [[ ! -d "$dir" ]]; then dir="$PWD"; fi
-. "$dir/check-dependencies"
-
-check_dependencies cgexec lotus-worker
-
 declare wreponame
 declare wrepopath
 

@@ -12,22 +12,21 @@
 # 300 seconds  = 5 minutes     (~9TiB/day)
 # 270 seconds  = 4.5 minutes  (~10TiB/day)
 
-dir="${BASH_SOURCE%/*}"
-if [[ ! -d "$dir" ]]; then dir="$PWD"; fi
-. "$dir/check-dependencies"
+loopSleepTime=${LOOP_SLEEP_TIME:=540}
 
-check_dependencies lotus-miner
-
-pledgeCounter=0
-loopSleepTime=${LOOP_SLEEP_TIME:=2700}
-initialSleepTime=${INITIAL_SLEEP_TIME:=0}
-maximumPledges=${MAXIMUM_PLEDGES:=320}
-
-sleep $initialSleepTime
-
-while [ $pledgeCounter -le $maximumPledges ]
+while true
 do
-    lotus-miner sectors pledge
-    let pledgeCounter++
-    sleep $loopSleepTime
+	pc1Workers=$(lotus-miner sectors list --states PreCommit1 | wc -l)
+
+	if [ $pc1Workers -lt 12 ]; then
+
+		apWorkers=$(lotus-miner sectors list --states Packing,AddPiece,SnapDealsAddPiece | wc -l)
+
+		if [ $apWorkers -lt 4 ]; then
+		    echo "Found $pc1Workers PC1 workers and $apWorkers AP workers, starting new job..."
+		    lotus-miner sectors pledge
+		fi
+	fi
+
+	sleep $loopSleepTime
 done
