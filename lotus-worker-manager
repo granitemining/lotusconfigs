@@ -39,22 +39,19 @@ declare g_bellmanCustomGpu
 function is_task_enabled
 {
     local task=${@:1}
-    [[ "$g_tasks" =~ (^|[[:space:]])"$task"($|[[:space:]]) ]] \
-    && true || false
+    [[ "$g_tasks" =~ (^|[[:space:]])"$task"($|[[:space:]]) ]]
 }
 
 function is_type_enabled
 {
     local type=${@:1}
-    [[ "$g_type" == "$type" ]] \
-    && true || false
+    [[ "$g_type" == "$type" ]]
 }
 
 function is_flag_enabled
 {
     local flag=${@:1}
-    [[ "$g_flags" =~ (^|[[:space:]])"$flag"($|[[:space:]]) ]] \
-    && true || false
+    [[ "$g_flags" =~ (^|[[:space:]])"$flag"($|[[:space:]]) ]]
 }
 
 function is_task_of
