@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+declare wreponame
+declare wrepopath
+
+while true; do
+    read -p "Worker name: " -i $wreponame -e wreponame
+    wrepopath="$HOME/.lotusworkers/$wreponame"
+    if [ ! -d "$wrepopath" ]; then
+        echo "$wreponame does not exist."
+        echo "Use lotus-worker-manager to create it first."
+        continue
+    fi
+    break
+done
+
+read -p "Start monitoring $wreponame now? [y/N] " -r start
+if [[ "${start,,}" == "y" ]]; then
+    tail -f $wrepopath/$wreponame.log
+fi
