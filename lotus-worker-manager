@@ -20,16 +20,17 @@ readonly WIDTH=0
 for i in \
     E_CREATE_GENERALPARAMS E_CREATE_TYPE E_CREATE_TASKS E_CREATE_SUMMARY E_CREATE_ADVANCED E_CREATE_QUIT \
     E_DELETE_SELECT E_DELETE_CONFIRM E_DELETE_QUIT \
-    E_TOGGLE_SELECT E_TOGGLE_CONFIRM E_TOGGLE_QUIT \
+    E_START_SELECT E_START_CONFIRM E_START_QUIT \
+    E_STOP_SELECT E_STOP_CONFIRM E_STOP_QUIT \
     E_CREATE_ADVANCED_PARAMETERS E_CREATE_ADVANCED_CUSTOM E_CREATE_ADVANCED_FLAGS E_CREATE_ADVANCED_QUIT; do \
     readonly ${i}=$((x++)); done
 
-declare g_name
-declare g_port
+declare g_name='pc1w1'
+declare g_port='3401'
 declare g_type='Seal'
-declare g_gpus
+declare g_gpus='0,1'
 declare g_cpuUtilization='0.01'
-declare g_tasks
+declare g_tasks='PC1'
 declare g_flags='SDR'
 declare g_cpuGroup='all'
 declare g_generalParams
@@ -37,8 +38,8 @@ declare g_advancedParams
 declare g_advancedCustom
 declare g_advancedCustomTempFile
 declare g_bellmanCustomGpu
-declare g_workersToEnable
-declare g_workersToDisable
+declare g_workersToStart
+declare g_workersToStop
 declare g_workersToDelete
 
 function is_task_enabled
@@ -220,45 +221,77 @@ function create_worker_summary_dialog
         3>&1 1>&2 2>&3 3>&-
 }
 
-function toggle_worker_select_dialog
+function start_worker_select_dialog
 {
-    g_workersToEnable=$(dialog \
-        --title 'Toggle Worker' \
-        --backtitle 'Lotus Worker Manager' \
-        --ok-label 'Next' \
-        --no-cancel \
-        --no-tags \
-        --checklist 'Select Workers' $HEIGHT $WIDTH 10 \
-        $(toggle_worker_select_dialog_checklist) \
-        3>&1 1>&2 2>&3 3>&-)
+    local checklist=$(start_worker_select_dialog_checklist)
 
-    local allWorkers=$(ls ~/.lotusworkers)
-    g_workersToDisable=$(comm -23  <(tr ' ' $'\n' <<< "$allWorkers") <(tr ' ' $'\n' <<< "$g_workersToEnable"))
+    if [ -n "$checklist" ]; then
+        g_workersToStart=$(dialog \
+            --title 'Start Worker' \
+            --backtitle 'Lotus Worker Manager' \
+            --ok-label 'Next' \
+            --no-cancel \
+            --no-tags \
+            --checklist 'Select Workers' $HEIGHT $WIDTH 10 $checklist \
+            3>&1 1>&2 2>&3 3>&-)
+    else
+        dialog --msgbox "No workers to start." $HEIGHT $WIDTH 3>&1 1>&2 2>&3 3>&-
+        return $DIALOG_CANCEL
+    fi
 }
 
-function toggle_worker_confirm_dialog
+function start_worker_confirm_dialog
 {
-    declare summary
-    summary+="Enabling $g_workersToEnable\n"
-    summary+="Disabling $g_workersToDisable\n"
-
-    dialog --title 'Toggle Worker' \
+    dialog --title 'Start Worker' \
            --backtitle 'Lotus Worker Manager' \
-           --yesno "${summary}\nProceed?" $HEIGHT $WIDTH \
+           --yesno "Start $g_workersToStart?" $HEIGHT $WIDTH \
+           3>&1 1>&2 2>&3 3>&-
+}
+
+function stop_worker_select_dialog
+{
+    local checklist=$(stop_worker_select_dialog_checklist)
+
+    if [ -n "$checklist" ]; then
+        g_workersToStop=$(dialog \
+            --title 'Stop Worker' \
+            --backtitle 'Lotus Worker Manager' \
+            --ok-label 'Next' \
+            --no-cancel \
+            --no-tags \
+            --checklist 'Select Workers' $HEIGHT $WIDTH 10 $checklist \
+            3>&1 1>&2 2>&3 3>&-)
+    else
+        dialog --msgbox "No workers to stop." $HEIGHT $WIDTH 3>&1 1>&2 2>&3 3>&-
+        return $DIALOG_CANCEL
+    fi
+}
+
+function stop_worker_confirm_dialog
+{
+    dialog --title 'Stop Worker' \
+           --backtitle 'Lotus Worker Manager' \
+           --yesno "Stop $g_workersToStop?" $HEIGHT $WIDTH \
            3>&1 1>&2 2>&3 3>&-
 }
 
 function delete_worker_select_dialog
 {
-    g_workersToDelete=$(dialog \
-        --title 'Delete Worker' \
-        --backtitle 'Lotus Worker Manager' \
-        --ok-label 'Next' \
-        --no-cancel \
-        --no-tags \
-        --checklist 'Select Workers' $HEIGHT $WIDTH 10 \
-        $(delete_worker_select_dialog_checklist) \
-        3>&1 1>&2 2>&3 3>&-)
+    local checklist=$(delete_worker_select_dialog_checklist)
+
+    if [ -n "$checklist" ]; then
+        g_workersToDelete=$(dialog \
+            --title 'Delete Worker' \
+            --backtitle 'Lotus Worker Manager' \
+            --ok-label 'Next' \
+            --no-cancel \
+            --no-tags \
+            --checklist 'Select Workers' $HEIGHT $WIDTH 10 $checklist \
+            3>&1 1>&2 2>&3 3>&-)
+    else
+        dialog --msgbox "No workers have been created yet." $HEIGHT $WIDTH 3>&1 1>&2 2>&3 3>&-
+        return $DIALOG_CANCEL
+    fi
 }
 
 function delete_worker_confirm_dialog
@@ -291,11 +324,10 @@ function create_worker_type
     
     case $? in
         $DIALOG_NEXT ) 	
-            if [[ "$g_type" == "Seal" ]]; then
-                state=$E_CREATE_TASKS
-            else
-                state=$E_CREATE_SUMMARY
-            fi ;;
+            [ "$g_type" == "Seal" ] \
+                && state=$E_CREATE_TASKS \
+                || state=$E_CREATE_SUMMARY
+            ;;
         $DIALOG_BACK ) 
             state=$E_CREATE_GENERALPARAMS 
             ;;
@@ -398,11 +430,9 @@ function create_worker_summary
             create_worker_summary_finish
             ;;
         $DIALOG_BACK ) 
-            if [[ "$g_type" == "Seal" ]]; then
-                state=$E_CREATE_TASKS
-            else
-                state=$E_CREATE_TYPE
-            fi ;;
+            [ "$g_type" == "Seal" ] && \
+                state=$E_CREATE_TASKS || state=$E_CREATE_TYPE  
+            ;;
         $DIALOG_CANCEL ) 
             state=$E_CREATE_ADVANCED
             ;;
@@ -411,50 +441,38 @@ function create_worker_summary
     return $state
 }
 
-function is_worker_real
-{
-    local wreponame=$1
-    local wrepopath="~/.lotusworkers/$wreponame"
-
-    [ -f "$wrepopath/wreponame.env" ]
-}
-
 function turn_worker_off
 {
     local wreponame=$1
-    local wrepopath="~/.lotusworkers/$wreponame"
+    local wrepopath="$HOME/.lotusworkers/$wreponame"
 
-    if is_worker_real $wreponame && [ -f "$wrepopath/repo.lock" ]; then
-        # source $wrepopath/$wreponame.env
-        # pkill --signal SIGINT -u mainnet -f "lotus-worker run --listen=${LOTUS_CUSTOM_IP:=0.0.0.0}:${LOTUS_CUSTOM_PORT:=3400}"
-
-        rm $wrepopath/repo.lock # for testing
+    if [ -f "$wrepopath/repo.lock" ]; then
+        source $wrepopath/$wreponame.env
+        pkill --signal SIGINT -u mainnet -f "lotus-worker run --listen=${LOTUS_CUSTOM_IP:=0.0.0.0}:${LOTUS_CUSTOM_PORT:=3400}"
     fi
 }
 
 function turn_worker_on
 {
     local wreponame=$1
-    local wrepopath="~/.lotusworkers/$wreponame"
+    local wrepopath="$HOME/.lotusworkers/$wreponame"
 
-    if is_worker_real $wreponame && [ ! -f "$wrepopath/repo.lock" ]; then
-        # source $wrepopath/$wreponame.env
-        # [ -n "$LOTUS_CUSTOM_CPUGROUP" ] && cgexec_args="cgexec -g cpuset:${LOTUS_CUSTOM_CPUGROUP:=all} --sticky"
+    if [ ! -f "$wrepopath/repo.lock" ]; then
+        source $wrepopath/$wreponame.env
+        [ -n "$LOTUS_CUSTOM_CPUGROUP" ] && cgexec_args="cgexec -g cpuset:${LOTUS_CUSTOM_CPUGROUP:=all} --sticky"
 
-        # nohup $cgexec_args lotus-worker run \
-        #     --listen=${LOTUS_CUSTOM_IP:=0.0.0.0}:${LOTUS_CUSTOM_PORT:=3400} \
-        #     --addpiece=${LOTUS_CUSTOM_ADDPIECE:=false} \
-        #     --precommit1=${LOTUS_CUSTOM_PRECOMMIT1:=false} \
-        #     --precommit2=${LOTUS_CUSTOM_PRECOMMIT2:=false} \
-        #     --commit=${LOTUS_CUSTOM_COMMIT:=false} \
-        #     --unseal=${LOTUS_CUSTOM_UNSEAL:=false} \
-        #     --replica-update=${LOTUS_CUSTOM_REPLICA_UPDATE:=false} \
-        #     --prove-replica-update2=${LOTUS_CUSTOM_PROVE_REPLICA_UPDATE2:=false} \
-        #     --regen-sector-key=${LOTUS_CUSTOM_REGEN_SECTOR_KEY:=false} \
-        #     --winningpost=${LOTUS_CUSTOM_WINNINGPOST:=false} \
-        #     --windowpost=${LOTUS_CUSTOM_WINDOWPOST:=false} > $wrepopath/$wreponame.log 2>&1 &
-
-        touch "$wrepopath/repo.lock" # for testing
+        nohup $cgexec_args lotus-worker run \
+            --listen=${LOTUS_CUSTOM_IP:=0.0.0.0}:${LOTUS_CUSTOM_PORT:=3400} \
+            --addpiece=${LOTUS_CUSTOM_ADDPIECE:=false} \
+            --precommit1=${LOTUS_CUSTOM_PRECOMMIT1:=false} \
+            --precommit2=${LOTUS_CUSTOM_PRECOMMIT2:=false} \
+            --commit=${LOTUS_CUSTOM_COMMIT:=false} \
+            --unseal=${LOTUS_CUSTOM_UNSEAL:=false} \
+            --replica-update=${LOTUS_CUSTOM_REPLICA_UPDATE:=false} \
+            --prove-replica-update2=${LOTUS_CUSTOM_PROVE_REPLICA_UPDATE2:=false} \
+            --regen-sector-key=${LOTUS_CUSTOM_REGEN_SECTOR_KEY:=false} \
+            --winningpost=${LOTUS_CUSTOM_WINNINGPOST:=false} \
+            --windowpost=${LOTUS_CUSTOM_WINDOWPOST:=false} > $wrepopath/$wreponame.log 2>&1 &
     fi
 }
 
@@ -540,35 +558,33 @@ function create_worker
     rm $g_advancedCustomTempFile
 }
 
-function toggle_worker_select
+function start_worker_select
 {
-    local state=$E_TOGGLE_QUIT
-    toggle_worker_select_dialog
+    local state=$E_START_QUIT
+    start_worker_select_dialog
 
     case $? in
         $DIALOG_NEXT )
-            state=$E_TOGGLE_CONFIRM
+            state=$E_START_CONFIRM
+            if [ -z "$g_workersToStart" ]; then
+                dialog --msgbox "Please select worker(s)" $HEIGHT $WIDTH 3>&1 1>&2 2>&3 3>&-
+                state=$E_START_SELECT
+            fi
             ;;
     esac
 
-    toggle_worker_select_postprocessing
     return $state
 }
 
-function toggle_worker_confirm
+function start_worker_confirm
 {
-    local state=$E_TOGGLE_QUIT
-    toggle_worker_confirm_dialog
+    local state=$E_START_QUIT
+    start_worker_confirm_dialog
 
     case $? in
         $DIALOG_YES )
-            for ew in $g_workersToEnable; do turn_worker_on $ew; done
-            for dw in $g_workersToDisable; do turn_worker_off $dw; done
-
-            declare summary
-            summary+="$g_workersToEnable enabled!\n"
-            summary+="$g_workersToDisable disabled!\n"
-            dialog --msgbox "$summary" $HEIGHT $WIDTH 3>&1 1>&2 2>&3 3>&-
+            for w in $g_workersToStart; do turn_worker_on $w; done
+            dialog --msgbox "$g_workersToStart started!" $HEIGHT $WIDTH 3>&1 1>&2 2>&3 3>&-
             ;;
     esac
 
@@ -577,19 +593,59 @@ function toggle_worker_confirm
 
 function start_worker
 {
-    local state=$E_TOGGLE_SELECT
-    while [[ $state -ne $E_TOGGLE_QUIT ]]; do
+    local state=$E_START_SELECT
+    while [[ $state -ne $E_START_QUIT ]]; do
         case $state in
-            $E_TOGGLE_SELECT ) toggle_worker_select ;;
-            $E_TOGGLE_CONFIRM ) toggle_worker_confirm ;;
+            $E_START_SELECT ) start_worker_select ;;
+            $E_START_CONFIRM ) start_worker_confirm ;;
         esac
         state=$?
     done
 }
 
+function stop_worker_select
+{
+    local state=$E_STOP_QUIT
+    stop_worker_select_dialog
+
+    case $? in
+        $DIALOG_NEXT )
+            state=$E_STOP_CONFIRM
+            if [ -z "$g_workersToStop" ]; then
+                dialog --msgbox "Please select worker(s)" $HEIGHT $WIDTH 3>&1 1>&2 2>&3 3>&-
+                state=$E_STOP_SELECT
+            fi
+            ;;
+    esac
+
+    return $state
+}
+
+function stop_worker_confirm
+{
+    local state=$E_STOP_QUIT
+    stop_worker_confirm_dialog
+
+    case $? in
+        $DIALOG_YES )
+            for w in $g_workersToStop; do turn_worker_off $w; done
+            dialog --msgbox "$g_workersToStop stopped!" $HEIGHT $WIDTH 3>&1 1>&2 2>&3 3>&-
+            ;;
+    esac
+
+    return $state
+}
+
 function stop_worker
 {
     local state=$E_STOP_SELECT
+    while [[ $state -ne $E_STOP_QUIT ]]; do
+        case $state in
+            $E_STOP_SELECT ) stop_worker_select ;;
+            $E_STOP_CONFIRM ) stop_worker_confirm ;;
+        esac
+        state=$?
+    done
 }
 
 function delete_worker_select
@@ -600,6 +656,10 @@ function delete_worker_select
     case $? in
         $DIALOG_NEXT )
             state=$E_DELETE_CONFIRM
+            if [ -z "$g_workersToDelete" ]; then
+                dialog --msgbox "Please select worker(s)" $HEIGHT $WIDTH 3>&1 1>&2 2>&3 3>&-
+                state=$E_DELETE_SELECT
+            fi
             ;;
     esac
     
@@ -613,7 +673,7 @@ function delete_worker_confirm
 
     case $? in
         $DIALOG_YES )
-            for w in $g_workersToDelete; do rm -R ~/.lotusworkers/$w; done
+            for w in $g_workersToDelete; do rm -R $HOME/.lotusworkers/$w; done
             dialog --msgbox "$g_workersToDelete deleted!" $HEIGHT $WIDTH 3>&1 1>&2 2>&3 3>&-
             ;;
     esac
@@ -633,20 +693,33 @@ function delete_worker
     done
 }
 
-function toggle_worker_select_dialog_checklist
+function start_worker_select_dialog_checklist
 {
-    for wrepopath in ~/.lotusworkers/*; do
-        local ison=$([ -f "$wrepopath/repo.lock" ] && echo 'on' || echo 'off')
-        local wreponame=$(basename $wrepopath)
-        [ -f "$wrepopath/$wreponame.env" ] && echo -n "$wreponame $wreponame $ison "
+    for wrepopath in $HOME/.lotusworkers/*; do
+        if [ ! -f "$wrepopath/repo.lock" ]; then 
+            local wreponame=$(basename $wrepopath)
+            echo -n "$wreponame $wreponame off "
+        fi
+    done
+}
+
+function stop_worker_select_dialog_checklist
+{
+    for wrepopath in $HOME/.lotusworkers/*; do
+        if [ -f "$wrepopath/repo.lock" ]; then 
+            local wreponame=$(basename $wrepopath)
+            echo -n "$wreponame $wreponame off "
+        fi
     done
 }
 
 function delete_worker_select_dialog_checklist
 {
-    for wrepopath in ~/.lotusworkers/*; do
+    for wrepopath in $HOME/.lotusworkers/*; do
         local wreponame=$(basename $wrepopath)
-        [ -f "$wrepopath/$wreponame.env" ] && echo -n "$wreponame $wreponame off "
+        if [ -d "$wrepopath" ]; then 
+            echo -n "$wreponame $wreponame off "
+        fi
     done
 }
 
